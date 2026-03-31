@@ -1,0 +1,19 @@
+{
+  "name": "@udt/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./next": "./next.mjs"
+  },
+  "dependencies": {
+    "@next/eslint-plugin-next": "^15.3.5",
+    "@typescript-eslint/eslint-plugin": "^8.35.1",
+    "@typescript-eslint/parser": "^8.35.1",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-storybook": "^9.0.15",
+    "globals": "^16.0.0"
+  },
+  "peerDependencies": {
+    "eslint": "^9"
+  }
+}

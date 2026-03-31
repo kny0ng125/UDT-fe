@@ -1,0 +1,26 @@
+{
+  "name": "@udt/shared",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./apis/*": "./src/apis/*.ts",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./types/*": "./src/types/*.ts",
+    "./utils/*": "./src/utils/*.ts",
+    "./constants/*": "./src/constants/*.ts",
+    "./lib/*": "./src/lib/*.ts"
+  },
+  "dependencies": {
+    "@udt/ui": "*",
+    "@tanstack/react-query": "^5.81.5",
+    "axios": "^1.11.0",
+    "jose": "^6.0.12",
+    "qs": "^6.14.0",
+    "sonner": "^2.0.6"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
