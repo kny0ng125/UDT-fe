@@ -1,0 +1,49 @@
+// src/hooks/useLogoutHandler.ts
+import { useRouter } from 'next/navigation';
+import { authService } from '@udt/shared/apis/authService';
+import {
+  showSimpleToast,
+  showInteractiveToast,
+} from '@udt/ui/common/Toast';
+import { useRecommendStore } from '@store/useRecommendStore';
+
+export const useLogoutHandler = () => {
+  const router = useRouter();
+  const { setPhase, resetRecommendProgress } = useRecommendStore();
+
+  const handleLogout = () => {
+    showInteractiveToast.confirm({
+      message: '정말 로그아웃 하시겠습니까?',
+      confirmText: '로그아웃',
+      cancelText: '취소',
+      position: 'top-center',
+      className: 'w-[360px] bg-white shadow-lg',
+      onConfirm: async () => {
+        try {
+          await authService.logout();
+          localStorage.clear();
+          sessionStorage.clear();
+          setPhase('start');
+          resetRecommendProgress();
+
+          showSimpleToast.success({
+            message: '로그아웃 되었습니다.',
+            position: 'top-center',
+            className: 'w-full bg-black/80 shadow-lg text-white',
+          });
+
+          // 메인 페이지로 이동
+          router.push('/');
+        } catch {
+          showSimpleToast.error({
+            message: '로그아웃에 실패했습니다.',
+            position: 'top-center',
+            className: 'w-full bg-black/80 shadow-lg text-white',
+          });
+        }
+      },
+    });
+  };
+
+  return { handleLogout };
+};

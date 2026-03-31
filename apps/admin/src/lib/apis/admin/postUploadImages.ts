@@ -1,0 +1,18 @@
+import axiosInstance from '@udt/shared/apis/axiosInstance';
+
+export const postUploadImages = (files: File[]) => {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append('files', file);
+  });
+
+  return axiosInstance.post<{ uploadedFileUrls: string[] }>(
+    '/api/admin/files/images',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  );
+};
