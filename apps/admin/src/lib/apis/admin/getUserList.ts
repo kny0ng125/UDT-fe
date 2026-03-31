@@ -1,5 +1,5 @@
 import { CursorPageResponse, User } from '@type/admin/user';
-import axiosInstance from '../axiosInstance';
+import axiosInstance from '@udt/shared/apis/axiosInstance';
 
 interface GetUserListParams {
   cursor?: string | null;

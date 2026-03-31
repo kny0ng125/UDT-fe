@@ -1,5 +1,5 @@
 import { StoredContentDetail } from '@type/profile/StoredContentDetail';
-import axiosInstance from '../axiosInstance';
+import axiosInstance from '@udt/shared/apis/axiosInstance';
 
 export const getStoredContentDetail = async (
   contentId: number,

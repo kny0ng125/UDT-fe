@@ -1,4 +1,4 @@
-import axiosInstance from '../axiosInstance';
+import axiosInstance from '@udt/shared/apis/axiosInstance';
 
 //[PATCH] /api/users/survey/genre 유저 선호 장르 수정
 export const patchGenre = async (

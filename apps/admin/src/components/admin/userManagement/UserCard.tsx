@@ -5,7 +5,7 @@ import { Button } from '@udt/ui/components/button';
 import { Mail, Calendar, Pencil } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@udt/ui/components/avatar';
 import { User } from '@type/admin/user';
-import { Badge } from '../../ui/badge';
+import { Badge } from '@udt/ui/components/badge';
 import { formatDateHour } from '@utils/admin/formatDate';
 
 //개별 유저 정보 표시

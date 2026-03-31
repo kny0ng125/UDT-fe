@@ -1,6 +1,6 @@
 import { Avatar, AvatarImage, AvatarFallback } from '@udt/ui/components/avatar';
 import { PlatFormButtonProps } from '@type/profile/Mypage';
-import { Button } from '../ui/button';
+import { Button } from '@udt/ui/components/button';
 
 // 누르면 해당 콘텐츠에 대해 바로 해당 OTT 페이지로 이동하는 버튼
 export const PlatformButton = ({

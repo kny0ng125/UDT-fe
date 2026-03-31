@@ -2,7 +2,7 @@ import {
   GetRecommendedContentsResponse,
   RecommendedQueryParams,
 } from '@type/profile/RecommendedContent';
-import axiosInstance from '../axiosInstance';
+import axiosInstance from '@udt/shared/apis/axiosInstance';
 
 // [GET] /api/users/me/curated/contents 사용자의 엄선된 콘텐츠 목록 조회
 
