@@ -26,21 +26,3 @@ jobs:
     - name: Build project
       run: npm run build
       
-    - name: Deploy to Vercel (Production)
-      if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'pull_request' && github.base_ref == 'main')
-      uses: amondnet/vercel-action@v25
-      with:
-        vercel-token: ${{ secrets.VERCEL_TOKEN }}
-        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-        working-directory: ./
-        vercel-args: '--prod'
-        
-    - name: Deploy to Vercel (Preview)
-      if: (github.ref == 'refs/heads/dev' && github.event_name == 'push') || (github.event_name == 'pull_request' && github.base_ref == 'dev')
-      uses: amondnet/vercel-action@v25
-      with:
-        vercel-token: ${{ secrets.VERCEL_TOKEN }}
-        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-        working-directory: ./
