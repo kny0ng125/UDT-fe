@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { StoredContentDetail } from '@type/profile/StoredContentDetail';
-import { Card, CardContent, CardHeader } from '../ui/card';
+import { Card, CardContent, CardHeader } from '@udt/ui/components/card';
 import { CircleOption } from '../common/circleOption';
 import { getPlatformLogo } from '@udt/shared/utils/getPlatformLogo';
 

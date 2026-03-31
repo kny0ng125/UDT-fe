@@ -134,6 +134,11 @@ export async function middleware(request: NextRequest) {
 
   const token = request.cookies.get('Authorization')?.value;
 
+  /* -------- /signin → /login 리다이렉트 -------- */
+  if (pathname === '/signin') {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
   /* -------- /login 페이지 특별 처리 (무한루프 방지) -------- */
   if (pathname === '/login') {
     if (token) {

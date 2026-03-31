@@ -1,5 +1,5 @@
 import { SimpleContentData } from '@type/explore/Explore';
-import axiosInstance from '../axiosInstance';
+import axiosInstance from '@udt/shared/apis/axiosInstance';
 
 // 오늘의 OTT 콘텐츠 추천 목록 조회 API 호출 함수 (/api/contents/weekly)
 export const getTodayContents = async (

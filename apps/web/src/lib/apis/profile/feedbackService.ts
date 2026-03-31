@@ -2,7 +2,7 @@ import {
   FeedbackQueryParams,
   GetFeedbackContentsResponse,
 } from '@type/profile/FeedbackContent';
-import axiosInstance from '../axiosInstance';
+import axiosInstance from '@udt/shared/apis/axiosInstance';
 
 // [GET] /api/users/me/feedbacks → 좋아요/싫어요 피드백 콘텐츠 조회
 export const getFeedbackContents = async (
