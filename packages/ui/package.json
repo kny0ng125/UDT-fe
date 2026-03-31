@@ -7,6 +7,9 @@
     "./components/*": "./src/components/*.tsx",
     "./common/*": "./src/common/*.tsx"
   },
+  "scripts": {
+    "test": "jest"
+  },
   "peerDependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
