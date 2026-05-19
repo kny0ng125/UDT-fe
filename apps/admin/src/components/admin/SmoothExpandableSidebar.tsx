@@ -1,12 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { Clock, FileText, FolderCheck, Users } from 'lucide-react';
+import { Activity, FileText, FolderCheck, Users } from 'lucide-react';
 import { cn } from '@udt/ui';
 
 // 탭 종류 정의
 type TabType =
-  | 'request-queue'
+  | 'job-monitor'
   | 'content-management'
   | 'member-management'
   | 'batch-result';
@@ -25,9 +25,9 @@ const menuItems = [
     icon: FileText,
   },
   {
-    id: 'request-queue' as TabType, // 요청 대기열
-    title: '배치 대기열',
-    icon: Clock,
+    id: 'job-monitor' as TabType, // 작업 모니터
+    title: '작업 모니터',
+    icon: Activity,
   },
   {
     id: 'batch-result' as TabType, // 배치 결과

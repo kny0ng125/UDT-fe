@@ -26,6 +26,7 @@ import { useUpdateContent } from '@hooks/admin/usePatchContent';
 import { useDeleteContent } from '@hooks/admin/useDeleteContent';
 import { useGetContentDetail } from '@hooks/admin/useGetContentDetail';
 import { useMutationErrorToast } from '@udt/shared/hooks/useMutationErrorToast';
+import { extractBulkValidationError } from '@utils/admin/extractBulkValidationError';
 import ContentForm from '@components/admin/ContentForm';
 import ContentCard from '@components/admin/ContentCard';
 import CategoryChart from '@components/admin/CategoryChart';
@@ -81,9 +82,30 @@ export default function AdminDashboard() {
   const updateContent = useUpdateContent();
   const deleteContent = useDeleteContent();
 
-  // 에러 토스트 처리
-  useMutationErrorToast(postContent);
-  useMutationErrorToast(updateContent);
+  // 서버측 검증 실패(BulkValidationException) 응답을 추출하여 폼에 inline 표시
+  const postValidationError = useMemo(
+    () => extractBulkValidationError(postContent.error),
+    [postContent.error],
+  );
+  const updateValidationError = useMemo(
+    () => extractBulkValidationError(updateContent.error),
+    [updateContent.error],
+  );
+
+  // 검증 실패는 폼에서 상세히 표시하므로 토스트는 짧은 요약만 띄움.
+  // 그 외 에러는 기본 메시지(잘못된 요청/권한 없음 등) 유지.
+  useMutationErrorToast(
+    postContent,
+    postValidationError
+      ? `검증 실패: ${postValidationError.errors.length}건. 폼을 확인해주세요.`
+      : undefined,
+  );
+  useMutationErrorToast(
+    updateContent,
+    updateValidationError
+      ? `검증 실패: ${updateValidationError.errors.length}건. 폼을 확인해주세요.`
+      : undefined,
+  );
   useMutationErrorToast(deleteContent);
 
   // 모달 상태 관리 (독립적으로 관리)
@@ -279,6 +301,7 @@ export default function AdminDashboard() {
               <ContentForm
                 onSave={handleAddContent}
                 onCancel={() => setIsAddDialogOpen(false)}
+                validationErrors={postValidationError?.errors}
               />
             </DialogContent>
           </Dialog>
@@ -302,6 +325,7 @@ export default function AdminDashboard() {
                   content={contentDetailData}
                   onSave={handleEditContent}
                   onCancel={closeEditDialog}
+                  validationErrors={updateValidationError?.errors}
                 />
               )}
             </DialogContent>

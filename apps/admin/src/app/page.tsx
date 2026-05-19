@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { LogOut } from 'lucide-react';
 import { Button } from '@udt/ui/components/button';
 import AdminDashboard from '@components/admin/AdminDashboard';
-import { BatchRequestQueueDashboard } from '@components/admin/batch/BatchRequestQueueDashboard';
+import { JobMonitor } from '@components/admin/batch/JobMonitor';
 import { SmoothExpandableSidebar } from '@components/admin/SmoothExpandableSidebar';
 import UserManagement from '@components/admin/userManagement/UserManagement';
 import { BatchResultDashboard } from '@components/admin/batch/BatchResultDashboard';
@@ -13,7 +13,7 @@ import { useLogoutHandler } from '@hooks/useLogoutHandler';
 
 // 탭 종류 정의
 type TabType =
-  | 'request-queue'
+  | 'job-monitor'
   | 'content-management'
   | 'member-management'
   | 'batch-result';
@@ -25,14 +25,14 @@ const tabConfig = {
     description: '사이트의 콘텐츠를 생성, 수정, 삭제할 수 있습니다',
     component: AdminDashboard,
   },
-  'request-queue': {
-    title: '배치 대기열',
-    description: '서버 내에서 대기 중인 배치 요청들을 확인할 수 있습니다',
-    component: BatchRequestQueueDashboard,
+  'job-monitor': {
+    title: '작업 모니터',
+    description: '대기 중·실패·무효 작업을 한 화면에서 확인하고 처리합니다',
+    component: JobMonitor,
   },
   'batch-result': {
     title: '배치 결과',
-    description: '서버 내에서 수행된 배치 요청들의 결과를 확인할 수 있습니다',
+    description: '처리 완료된 배치 작업의 집계 결과를 확인할 수 있습니다',
     component: BatchResultDashboard,
   },
   'member-management': {

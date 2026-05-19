@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify, type JWTPayload as JoseJWTPayload } from 'jose';
+import {
+  jwtVerify,
+  importSPKI,
+  type CryptoKey,
+  type JWTPayload as JoseJWTPayload,
+} from 'jose';
 
 /* -------------------------------------------------------------------------- */
 /* 타입                                                                      */
@@ -20,8 +25,42 @@ interface TokenVerificationResult {
 /* -------------------------------------------------------------------------- */
 /* 상수                                                                      */
 /* -------------------------------------------------------------------------- */
-const PUBLIC_PATHS = ['/_next', '/favicon.ico', '/fonts', '/images', '/icons'];
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const PUBLIC_PATHS = [
+  '/_next',
+  '/favicon.ico',
+  '/fonts',
+  '/images',
+  '/icons',
+  '/preview', // mock UI preview routes (no auth)
+];
+
+// 백엔드(TokenProvider)가 RS256 + admin 토큰에 aud="admin"으로 서명함.
+const JWT_ALGORITHM = 'RS256';
+const JWT_AUDIENCE = 'admin';
+// .env: JWT_PUBLIC_KEY 에 PEM 공개키. 멀티라인은 \n escape 도 허용.
+const JWT_PUBLIC_KEY = (process.env.JWT_PUBLIC_KEY || '').replace(/\\n/g, '\n');
+
+// importSPKI 결과를 모듈 스코프에 캐싱 (middleware는 매 요청 실행되므로 1회만 파싱)
+let cachedPublicKey: CryptoKey | null = null;
+let publicKeyImportFailed = false;
+
+async function getPublicKey(): Promise<CryptoKey | null> {
+  if (cachedPublicKey) return cachedPublicKey;
+  if (publicKeyImportFailed) return null;
+  if (!JWT_PUBLIC_KEY) {
+    console.error('❌ JWT_PUBLIC_KEY 환경변수가 설정되지 않았습니다.');
+    publicKeyImportFailed = true;
+    return null;
+  }
+  try {
+    cachedPublicKey = await importSPKI(JWT_PUBLIC_KEY, JWT_ALGORITHM);
+    return cachedPublicKey;
+  } catch (error) {
+    console.error('❌ JWT_PUBLIC_KEY 파싱 실패:', error);
+    publicKeyImportFailed = true;
+    return null;
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 /* 유틸 함수                                                                  */
@@ -35,8 +74,16 @@ function isStaticPath(pathname: string): boolean {
 /* -------------------------------------------------------------------------- */
 async function verifyToken(token: string): Promise<TokenVerificationResult> {
   try {
-    const secret = new TextEncoder().encode(JWT_SECRET);
-    const { payload } = await jwtVerify(token, secret);
+    const publicKey = await getPublicKey();
+    if (!publicKey) {
+      // 공개키 미설정/파싱 실패 → 검증 불가, invalid 처리
+      return { payload: null, isExpired: false, isInvalid: true };
+    }
+
+    const { payload } = await jwtVerify(token, publicKey, {
+      algorithms: [JWT_ALGORITHM],
+      audience: JWT_AUDIENCE,
+    });
 
     if (
       typeof payload.sub === 'string' &&

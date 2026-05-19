@@ -1,3 +1,3 @@
-import baseConfig from '@udt/eslint-config/next';
+import createConfig from '@udt/eslint-config/next';
 
-export default [...baseConfig];
+export default createConfig({ tsconfigRootDir: import.meta.dirname });

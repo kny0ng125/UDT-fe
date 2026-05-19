@@ -1,28 +1,40 @@
 'use client';
 
 import { Button } from '@udt/ui/components/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@udt/ui/components/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@udt/ui/components/card';
 import { Plus, X } from 'lucide-react';
 import Image from 'next/image';
 import type { ContentWithoutId } from '@type/admin/Content';
+import type { JobValidationError } from '@type/admin/error';
 
 interface DirectorInfoProps {
   formData: ContentWithoutId;
   setIsDirectorSearchOpen: (open: boolean) => void;
   removeDirector: (directorIdToRemove: number) => void;
+  getFieldError?: (fieldPath: string) => JobValidationError | undefined;
 }
 
 export default function DirectorInfo({
   formData,
   setIsDirectorSearchOpen,
   removeDirector,
+  getFieldError,
 }: DirectorInfoProps) {
+  const directorsErr = getFieldError?.('directors');
   return (
     <Card>
       <CardHeader>
         <CardTitle className="mt-5">감독 정보</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {directorsErr && (
+          <p className="text-xs text-red-600">{directorsErr.message}</p>
+        )}
         <Button
           type="button"
           onClick={() => setIsDirectorSearchOpen(true)}

@@ -2,16 +2,23 @@
 
 import type React from 'react';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Button } from '@udt/ui/components/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@udt/ui/components/tabs';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@udt/ui/components/tabs';
 import type {
   ContentWithoutId,
   ContentCreateUpdate,
   PlatformInfo,
 } from '@type/admin/Content';
+import type { JobValidationError } from '@type/admin/error';
 import { showSimpleToast } from '@udt/ui/common/Toast';
+import { AlertCircle } from 'lucide-react';
 import { useErrorToastOnce } from '@udt/shared/hooks/useErrorToastOnce';
 import { usePostUploadImages } from '@hooks/admin/usePostUploadImages';
 import ActorSearchDialog from '@components/admin/dialogs/actorSearchDialog';
@@ -29,7 +36,12 @@ interface ContentFormProps {
   content?: ContentWithoutId;
   onSave: (content: ContentCreateUpdate) => void;
   onCancel: () => void;
+  validationErrors?: JobValidationError[];
 }
+
+export type FieldErrorLookup = (
+  fieldPath: string,
+) => JobValidationError | undefined;
 
 // 폼 데이터 초기값
 const getInitialFormData = (content?: ContentWithoutId): ContentWithoutId => ({
@@ -107,11 +119,28 @@ export default function ContentForm({
   content,
   onSave,
   onCancel,
+  validationErrors,
 }: ContentFormProps) {
   const [formData, setFormData] = useState<ContentWithoutId>(() =>
     getInitialFormData(content),
   );
   const showErrorToast = useErrorToastOnce();
+
+  // 서버 검증 실패 필드 lookup. 필드명이 'platforms.0.watchUrl', 'platforms.watchUrl', 'platforms' 등
+  // 어느 깊이로 와도 prefix 매칭으로 잡힘.
+  const getFieldError = useMemo(() => {
+    if (!validationErrors || validationErrors.length === 0) {
+      return () => undefined;
+    }
+    return (fieldPath: string): JobValidationError | undefined => {
+      return validationErrors.find(
+        (e) =>
+          e.field === fieldPath ||
+          e.field.startsWith(`${fieldPath}.`) ||
+          e.field.startsWith(`${fieldPath}[`),
+      );
+    };
+  }, [validationErrors]);
 
   const [isActorSearchOpen, setIsActorSearchOpen] = useState(false);
   const [isDirectorSearchOpen, setIsDirectorSearchOpen] = useState(false);
@@ -295,6 +324,33 @@ export default function ContentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {validationErrors && validationErrors.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 p-4"
+        >
+          <div className="flex items-center gap-2 text-red-700 font-semibold">
+            <AlertCircle className="size-4" />
+            서버 검증 실패 ({validationErrors.length}건)
+          </div>
+          <ul className="mt-2 space-y-1 text-sm text-red-700">
+            {validationErrors.map((err, idx) => (
+              <li key={`${err.field}-${idx}`}>
+                <span className="font-mono text-xs px-1.5 py-0.5 mr-2 rounded bg-red-100">
+                  {err.field}
+                </span>
+                {err.message}
+                {err.value ? (
+                  <span className="ml-1 text-red-500/80">
+                    (값: {err.value})
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <Tabs defaultValue="contentInfo" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="contentInfo" className="cursor-pointer">
@@ -312,6 +368,7 @@ export default function ContentForm({
             updateFormData={updateFormData}
             handleImageUpload={handleImageUpload}
             uploadImagesMutation={uploadImagesMutation}
+            getFieldError={getFieldError}
           />
 
           {/* 상세 정보 */}
@@ -322,6 +379,7 @@ export default function ContentForm({
             removeGenre={removeGenre}
             addCountry={addCountry}
             removeCountry={removeCountry}
+            getFieldError={getFieldError}
           />
 
           {/* 감독 정보 */}
@@ -329,6 +387,7 @@ export default function ContentForm({
             formData={formData}
             setIsDirectorSearchOpen={setIsDirectorSearchOpen}
             removeDirector={removeDirector}
+            getFieldError={getFieldError}
           />
 
           {/* 출연진 정보 */}
@@ -336,6 +395,7 @@ export default function ContentForm({
             formData={formData}
             setIsActorSearchOpen={setIsActorSearchOpen}
             removeCast={removeCast}
+            getFieldError={getFieldError}
           />
 
           {/* 시청 플랫폼 */}
@@ -345,6 +405,7 @@ export default function ContentForm({
             setNewPlatform={setNewPlatform}
             addPlatform={addPlatform}
             removePlatform={removePlatform}
+            getFieldError={getFieldError}
           />
 
           {/* 배우 검색 다이얼로그 */}

@@ -10,10 +10,16 @@ import {
   SelectValue,
 } from '@udt/ui/components/select';
 import { Badge } from '@udt/ui/components/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@udt/ui/components/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@udt/ui/components/card';
 import { CONTENT_CATEGORIES, COUNTRIES } from '@constants/index';
 import { getGenresByCategory } from '@udt/shared/constants/genres';
 import type { ContentWithoutId } from '@type/admin/Content';
+import type { JobValidationError } from '@type/admin/error';
 
 interface DetailedInfoProps {
   formData: ContentWithoutId;
@@ -24,6 +30,7 @@ interface DetailedInfoProps {
   removeGenre: (genreToRemove: string) => void;
   addCountry: (selected: string) => void;
   removeCountry: (countryToRemove: string) => void;
+  getFieldError?: (fieldPath: string) => JobValidationError | undefined;
 }
 
 export default function DetailedInfo({
@@ -33,9 +40,18 @@ export default function DetailedInfo({
   removeGenre,
   addCountry,
   removeCountry,
+  getFieldError,
 }: DetailedInfoProps) {
   const selectedCategory = formData.categories[0]?.categoryType || '';
   const availableGenres = getGenresByCategory(selectedCategory);
+
+  const openDateErr = getFieldError?.('openDate');
+  const runningTimeErr = getFieldError?.('runningTime');
+  const episodeErr = getFieldError?.('episode');
+  const categoryErr = getFieldError?.('categories');
+  const genresErr =
+    getFieldError?.('genres') ?? getFieldError?.('categories.genres');
+  const countriesErr = getFieldError?.('countries');
 
   return (
     <Card>
@@ -62,8 +78,12 @@ export default function DetailedInfo({
                   openDate: e.target.value,
                 }))
               }
+              aria-invalid={!!openDateErr}
               className="dark:bg-gray-700 dark:text-white"
             />
+            {openDateErr && (
+              <p className="mt-1 text-xs text-red-600">{openDateErr.message}</p>
+            )}
           </div>
           <div>
             <Label htmlFor="runningTime" className="mb-3">
@@ -80,7 +100,13 @@ export default function DetailedInfo({
                   runningTime: Number(e.target.value) || 0,
                 }))
               }
+              aria-invalid={!!runningTimeErr}
             />
+            {runningTimeErr && (
+              <p className="mt-1 text-xs text-red-600">
+                {runningTimeErr.message}
+              </p>
+            )}
           </div>
           <div>
             <Label htmlFor="episode" className="mb-3">
@@ -97,7 +123,11 @@ export default function DetailedInfo({
                   episode: Number(e.target.value) || 0,
                 }))
               }
+              aria-invalid={!!episodeErr}
             />
+            {episodeErr && (
+              <p className="mt-1 text-xs text-red-600">{episodeErr.message}</p>
+            )}
           </div>
         </div>
 
@@ -121,7 +151,12 @@ export default function DetailedInfo({
               });
             }}
           >
-            <SelectTrigger className="cursor-pointer">
+            <SelectTrigger
+              aria-invalid={!!categoryErr}
+              className={`cursor-pointer ${
+                categoryErr ? 'border-destructive ring-destructive/20' : ''
+              }`}
+            >
               <SelectValue placeholder="카테고리 선택" />
             </SelectTrigger>
             <SelectContent>
@@ -136,12 +171,21 @@ export default function DetailedInfo({
               ))}
             </SelectContent>
           </Select>
+          {categoryErr && (
+            <p className="mt-1 text-xs text-red-600">{categoryErr.message}</p>
+          )}
         </div>
 
         {formData.categories[0]?.categoryType && (
           <div>
             <Label className="mb-3">장르 *</Label>
-            <div className="flex flex-wrap gap-2 max-w-full">
+            <div
+              className={`flex flex-wrap gap-2 max-w-full ${
+                genresErr
+                  ? 'rounded-md border border-destructive bg-red-50/40 p-2'
+                  : ''
+              }`}
+            >
               {availableGenres.map((genre) => {
                 const isSelected =
                   formData.categories[0]?.genres.includes(genre);
@@ -162,12 +206,21 @@ export default function DetailedInfo({
                 );
               })}
             </div>
+            {genresErr && (
+              <p className="mt-1 text-xs text-red-600">{genresErr.message}</p>
+            )}
           </div>
         )}
 
         <div>
           <Label className="mb-3">제작 국가</Label>
-          <div className="flex flex-wrap gap-2 mb-5">
+          <div
+            className={`flex flex-wrap gap-2 mb-5 ${
+              countriesErr
+                ? 'rounded-md border border-destructive bg-red-50/40 p-2'
+                : ''
+            }`}
+          >
             {COUNTRIES.map((country) => {
               const isSelected = formData.countries.includes(country);
 
@@ -187,6 +240,11 @@ export default function DetailedInfo({
               );
             })}
           </div>
+          {countriesErr && (
+            <p className="-mt-3 mb-3 text-xs text-red-600">
+              {countriesErr.message}
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

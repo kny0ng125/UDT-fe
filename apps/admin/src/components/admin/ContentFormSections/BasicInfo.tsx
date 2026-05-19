@@ -11,11 +11,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@udt/ui/components/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@udt/ui/components/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@udt/ui/components/card';
 import { Upload, Image as ImageIcon } from 'lucide-react';
 import { RATING_OPTIONS } from '@constants/index';
 import Image from 'next/image';
 import type { ContentWithoutId } from '@type/admin/Content';
+import type { JobValidationError } from '@type/admin/error';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useRef } from 'react';
 
@@ -34,6 +40,7 @@ interface BasicInfoProps {
     File[],
     unknown
   >;
+  getFieldError?: (fieldPath: string) => JobValidationError | undefined;
 }
 
 export default function BasicInfo({
@@ -41,9 +48,17 @@ export default function BasicInfo({
   updateFormData,
   handleImageUpload,
   uploadImagesMutation,
+  getFieldError,
 }: BasicInfoProps) {
   const posterInputRef = useRef<HTMLInputElement>(null);
   const backdropInputRef = useRef<HTMLInputElement>(null);
+
+  const titleErr = getFieldError?.('title');
+  const ratingErr = getFieldError?.('rating');
+  const descriptionErr = getFieldError?.('description');
+  const posterErr = getFieldError?.('posterUrl');
+  const backdropErr = getFieldError?.('backdropUrl');
+  const trailerErr = getFieldError?.('trailerUrl');
 
   return (
     <Card>
@@ -65,8 +80,12 @@ export default function BasicInfo({
                   title: e.target.value,
                 }))
               }
+              aria-invalid={!!titleErr}
               required
             />
+            {titleErr && (
+              <p className="mt-1 text-xs text-red-600">{titleErr.message}</p>
+            )}
           </div>
           <div>
             <Label htmlFor="rating" className="mb-3">
@@ -78,7 +97,12 @@ export default function BasicInfo({
                 updateFormData((prev) => ({ ...prev, rating: value }))
               }
             >
-              <SelectTrigger className="cursor-pointer">
+              <SelectTrigger
+                aria-invalid={!!ratingErr}
+                className={`cursor-pointer ${
+                  ratingErr ? 'border-destructive ring-destructive/20' : ''
+                }`}
+              >
                 <SelectValue placeholder="관람등급 선택" />
               </SelectTrigger>
               <SelectContent>
@@ -93,6 +117,9 @@ export default function BasicInfo({
                 ))}
               </SelectContent>
             </Select>
+            {ratingErr && (
+              <p className="mt-1 text-xs text-red-600">{ratingErr.message}</p>
+            )}
           </div>
         </div>
 
@@ -109,8 +136,14 @@ export default function BasicInfo({
                 description: e.target.value,
               }))
             }
+            aria-invalid={!!descriptionErr}
             rows={4}
           />
+          {descriptionErr && (
+            <p className="mt-1 text-xs text-red-600">
+              {descriptionErr.message}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -118,7 +151,13 @@ export default function BasicInfo({
             <Label htmlFor="posterUpload" className="mb-3">
               포스터 이미지
             </Label>
-            <div className="space-y-2">
+            <div
+              className={`space-y-2 ${
+                posterErr
+                  ? 'rounded-md border border-destructive bg-red-50/40 p-2'
+                  : ''
+              }`}
+            >
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
@@ -158,13 +197,22 @@ export default function BasicInfo({
                   />
                 </div>
               )}
+              {posterErr && (
+                <p className="mt-1 text-xs text-red-600">{posterErr.message}</p>
+              )}
             </div>
           </div>
           <div>
             <Label htmlFor="backdropUpload" className="mb-3">
               배경 이미지
             </Label>
-            <div className="space-y-2">
+            <div
+              className={`space-y-2 ${
+                backdropErr
+                  ? 'rounded-md border border-destructive bg-red-50/40 p-2'
+                  : ''
+              }`}
+            >
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
@@ -204,6 +252,11 @@ export default function BasicInfo({
                   />
                 </div>
               )}
+              {backdropErr && (
+                <p className="mt-1 text-xs text-red-600">
+                  {backdropErr.message}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -221,8 +274,14 @@ export default function BasicInfo({
                 trailerUrl: e.target.value,
               }))
             }
-            className="mb-5"
+            aria-invalid={!!trailerErr}
+            className="mb-1"
           />
+          {trailerErr && (
+            <p className="mb-5 mt-1 text-xs text-red-600">
+              {trailerErr.message}
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>
