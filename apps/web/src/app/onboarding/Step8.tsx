@@ -2,12 +2,9 @@
 
 import { Button } from '@udt/ui/components/button';
 import { HelpCircle } from 'lucide-react';
+import type { OnboardingStepProps } from './types';
 
-interface Step8Props {
-  onNext: () => void;
-}
-
-export default function Step8({ onNext }: Step8Props) {
+export default function Step8({ onNext }: OnboardingStepProps) {
   return (
     <div className="relative flex flex-col items-center justify-center h-full w-full px-6 text-white text-center">
       <div className="flex flex-col items-center gap-6 mb-8">

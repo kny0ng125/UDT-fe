@@ -5,12 +5,9 @@ import { Ticket } from '@components/Recommend/Ticket';
 import { showInteractiveToast } from '@udt/ui/common/Toast';
 import { toast } from 'sonner';
 import { MockMovies } from './moviedata';
+import type { OnboardingStepProps } from './types';
 
-interface Step6Props {
-  onNext: () => void;
-}
-
-export default function Step6({ onNext }: Step6Props) {
+export default function Step6({ onNext }: OnboardingStepProps) {
   const toastShownRef = useRef(false);
   const [mounted, setMounted] = useState(false); // hydration 방지
 

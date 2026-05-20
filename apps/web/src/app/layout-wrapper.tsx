@@ -21,7 +21,11 @@ export default function LayoutWrapper({
     '/profile/feedbacks',
     '/profile/recommend',
   ];
-  const shouldHideBottomNavbar = hideBottomNavbarPaths.includes(pathname);
+  // /preview/<feature>는 원본 /<feature> 정책을 따름
+  const normalizedPath = pathname.startsWith('/preview/')
+    ? pathname.slice('/preview'.length)
+    : pathname;
+  const shouldHideBottomNavbar = hideBottomNavbarPaths.includes(normalizedPath);
 
   if (isAdmin) {
     return (

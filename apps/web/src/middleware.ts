@@ -30,7 +30,14 @@ interface ReissueResult {
 /* -------------------------------------------------------------------------- */
 /* 상수                                                                      */
 /* -------------------------------------------------------------------------- */
-const PUBLIC_PATHS = ['/_next', '/favicon.ico', '/fonts', '/images', '/icons'];
+const PUBLIC_PATHS = [
+  '/_next',
+  '/favicon.ico',
+  '/fonts',
+  '/images',
+  '/icons',
+  '/preview', // mock UI preview routes (no auth)
+];
 
 // ADMIN 역할 제거 - ROLE_USER와 ROLE_GUEST만 허용
 const ROLE_RESTRICTIONS = {

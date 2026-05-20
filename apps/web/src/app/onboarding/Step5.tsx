@@ -4,11 +4,9 @@ import { useState } from 'react';
 import { SwipeContainer } from '@components/Recommend/SwipeContainer';
 import { Button } from '@udt/ui/components/button';
 import { MockMovies } from './moviedata';
-interface StepProps5 {
-  onNext: () => void;
-}
+import type { OnboardingStepProps } from './types';
 
-export default function Step5({ onNext }: StepProps5) {
+export default function Step5({ onNext }: OnboardingStepProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
   // MockMovies를 무한 반복할 수 있도록 확장
