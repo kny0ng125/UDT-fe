@@ -9,7 +9,13 @@
     "./types/*": "./src/types/*.ts",
     "./utils/*": "./src/utils/*.ts",
     "./constants/*": "./src/constants/*.ts",
-    "./lib/*": "./src/lib/*.ts"
+    "./lib/*": "./src/lib/*.ts",
+    "./auth": "./src/auth/index.ts"
+  },
+  "peerDependencies": {
+    "next": "^15.4.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "dependencies": {
     "@udt/ui": "*",

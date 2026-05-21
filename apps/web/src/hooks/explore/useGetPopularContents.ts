@@ -7,9 +7,9 @@ export const useGetPopularContents = (enabled: boolean) => {
   return useQuery<SimpleContentData[]>({
     queryKey: ['popularContents'],
     queryFn: () => getPopularContents(10),
-    staleTime: 0, // 바로 stale
+    staleTime: 60 * 1000, // 60초 fresh (RSC prefetch 활용)
     enabled: enabled, // 해당 쿼리 호출 여부 결정
-    gcTime: 0, // 캐시 즉시 삭제
+    gcTime: 5 * 60 * 1000, // 5분 캐시 유지
     refetchOnWindowFocus: false, // UX 보호용
   });
 };

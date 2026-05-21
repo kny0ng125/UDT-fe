@@ -1,44 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  jwtVerify,
-  importSPKI,
-  type CryptoKey,
-  type JWTPayload as JoseJWTPayload,
-} from 'jose';
+import { verifyToken, reissueToken } from '@udt/shared/auth';
 
 /* -------------------------------------------------------------------------- */
-/* 타입                                                                      */
+/* 정책                                                                       */
 /* -------------------------------------------------------------------------- */
-interface CustomJWTPayload extends JoseJWTPayload {
-  sub: string;
-  ROLE: string;
-  iat: number;
-  exp: number;
-}
-
-interface TokenVerificationResult {
-  payload: CustomJWTPayload | null;
-  isExpired: boolean;
-  isInvalid: boolean;
-}
-
-interface ReissueResult {
-  ok: boolean;
-  setCookie?: string;
-}
-
-/* -------------------------------------------------------------------------- */
-/* 상수                                                                      */
-/* -------------------------------------------------------------------------- */
-const PUBLIC_PATHS = [
-  '/_next',
-  '/favicon.ico',
-  '/fonts',
-  '/images',
-  '/icons',
-  '/preview', // mock UI preview routes (no auth)
-];
-
 // ADMIN 역할 제거 - ROLE_USER와 ROLE_GUEST만 허용
 const ROLE_RESTRICTIONS = {
   ROLE_GUEST: {
@@ -51,39 +16,12 @@ const ROLE_RESTRICTIONS = {
   },
 } as const;
 
-// 허용된 역할 목록
 const ALLOWED_ROLES = ['ROLE_USER', 'ROLE_GUEST'] as const;
 type AllowedRole = (typeof ALLOWED_ROLES)[number];
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-
 // 백엔드(TokenProvider)가 RS256 + web 토큰에 aud="web"으로 서명함.
-const JWT_ALGORITHM = 'RS256';
 const JWT_AUDIENCE = 'web';
-// .env: JWT_PUBLIC_KEY 에 PEM 공개키. 멀티라인은 \n escape 도 허용.
-const JWT_PUBLIC_KEY = (process.env.JWT_PUBLIC_KEY || '').replace(/\\n/g, '\n');
-
-// importSPKI 결과를 모듈 스코프에 캐싱 (middleware는 매 요청 실행되므로 1회만 파싱)
-let cachedPublicKey: CryptoKey | null = null;
-let publicKeyImportFailed = false;
-
-async function getPublicKey(): Promise<CryptoKey | null> {
-  if (cachedPublicKey) return cachedPublicKey;
-  if (publicKeyImportFailed) return null;
-  if (!JWT_PUBLIC_KEY) {
-    console.error('❌ JWT_PUBLIC_KEY 환경변수가 설정되지 않았습니다.');
-    publicKeyImportFailed = true;
-    return null;
-  }
-  try {
-    cachedPublicKey = await importSPKI(JWT_PUBLIC_KEY, JWT_ALGORITHM);
-    return cachedPublicKey;
-  } catch (error) {
-    console.error('❌ JWT_PUBLIC_KEY 파싱 실패:', error);
-    publicKeyImportFailed = true;
-    return null;
-  }
-}
+const REISSUE_ENDPOINT = '/api/auth/reissue/token';
 
 /* -------------------------------------------------------------------------- */
 /* 유틸 함수                                                                  */
@@ -95,32 +33,19 @@ function addMessageToUrl(url: URL, type: string, message: string): URL {
   return url;
 }
 
-function isStaticPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some((path) => pathname.startsWith(path));
-}
-
-// 역할이 허용된 역할인지 확인
 function isValidRole(role: string): role is AllowedRole {
   return ALLOWED_ROLES.includes(role as AllowedRole);
 }
 
 function hasPermission(role: string, pathname: string): boolean {
-  // 허용되지 않은 역할인 경우 접근 거부
-  if (!isValidRole(role)) {
-    return false;
-  }
+  if (!isValidRole(role)) return false;
 
   const restrictions = ROLE_RESTRICTIONS[role];
 
-  // GUEST의 경우: allowed 목록에 있는 경로만 접근 가능
   if (role === 'ROLE_GUEST') {
-    const hasAccess = restrictions.allowed.some((path) =>
-      pathname.startsWith(path),
-    );
-    return hasAccess;
+    return restrictions.allowed.some((path) => pathname.startsWith(path));
   }
 
-  // USER의 경우: denied 목록에 없으면 접근 가능
   if (role === 'ROLE_USER') {
     const isDenied = restrictions.denied.some((path) =>
       pathname.startsWith(path),
@@ -138,108 +63,7 @@ function getDefaultPath(role: string): string {
     case 'ROLE_USER':
       return '/recommend';
     default:
-      // 허용되지 않은 역할의 경우 루트로 이동
       return '/';
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* JWT 검증 - 만료/무효 상태 구분                                              */
-/* -------------------------------------------------------------------------- */
-async function verifyToken(token: string): Promise<TokenVerificationResult> {
-  try {
-    const publicKey = await getPublicKey();
-    if (!publicKey) {
-      return { payload: null, isExpired: false, isInvalid: true };
-    }
-
-    const { payload } = await jwtVerify(token, publicKey, {
-      algorithms: [JWT_ALGORITHM],
-      audience: JWT_AUDIENCE,
-    });
-
-    if (
-      typeof payload.sub === 'string' &&
-      typeof payload.ROLE === 'string' &&
-      typeof payload.iat === 'number' &&
-      typeof payload.exp === 'number'
-    ) {
-      // 허용되지 않은 역할인 경우 무효한 토큰으로 처리
-      if (!isValidRole(payload.ROLE)) {
-        console.warn(`Invalid role detected: ${payload.ROLE}`);
-        return {
-          payload: null,
-          isExpired: false,
-          isInvalid: true,
-        };
-      }
-
-      return {
-        payload: payload as CustomJWTPayload,
-        isExpired: false,
-        isInvalid: false,
-      };
-    }
-
-    return {
-      payload: null,
-      isExpired: false,
-      isInvalid: true,
-    };
-  } catch (error: unknown) {
-    console.error('JWT VERIFICATION FAILED:', error);
-
-    // jose 라이브러리의 만료 에러 감지
-    if (
-      error &&
-      typeof error === 'object' &&
-      'code' in error &&
-      error.code === 'ERR_JWT_EXPIRED'
-    ) {
-      return {
-        payload: null,
-        isExpired: true,
-        isInvalid: false,
-      };
-    }
-
-    return {
-      payload: null,
-      isExpired: false,
-      isInvalid: true,
-    };
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* 토큰 재발급 - Authorization 쿠키를 포함한 전체 쿠키 헤더 전달                */
-/* -------------------------------------------------------------------------- */
-async function reissueToken(request: NextRequest): Promise<ReissueResult> {
-  try {
-    console.log('토큰 재발급');
-    console.log('API_BASE_URL:', API_BASE_URL);
-
-    const cookieHeader = request.headers.get('cookie') || '';
-    console.log('Cookie Header:', cookieHeader);
-
-    const response = await fetch(`${API_BASE_URL}/api/auth/reissue/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Cookie: cookieHeader, // Authorization 쿠키가 포함된 전체 헤더 전달
-      },
-    });
-    if (response.status === 204) {
-      return {
-        ok: true,
-        setCookie: response.headers.get('set-cookie') || undefined,
-      };
-    }
-    console.log('error:', response.status);
-    return { ok: false };
-  } catch (error) {
-    console.error('error', error);
-    return { ok: false };
   }
 }
 
@@ -248,11 +72,6 @@ async function reissueToken(request: NextRequest): Promise<ReissueResult> {
 /* -------------------------------------------------------------------------- */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  /* -------- 정적 자원 -------- */
-  if (isStaticPath(pathname)) {
-    return NextResponse.next();
-  }
 
   /* -------- 쿠키 추출 -------- */
   const token = request.cookies.get('Authorization')?.value;
@@ -263,20 +82,22 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const verification = await verifyToken(token);
+    const verification = await verifyToken(token, {
+      audience: JWT_AUDIENCE,
+      allowedRoles: ALLOWED_ROLES,
+    });
 
     if (verification.payload) {
-      // 유효한 토큰이 있으면 기본 경로로 리다이렉트
       const defaultPath = getDefaultPath(verification.payload.ROLE);
       return NextResponse.redirect(new URL(defaultPath, request.url));
     }
 
     if (verification.isExpired) {
-      // 만료된 토큰이면 재발급 시도
-      const { ok, setCookie } = await reissueToken(request);
+      const { ok, setCookie } = await reissueToken(request, {
+        endpoint: REISSUE_ENDPOINT,
+      });
 
       if (ok) {
-        // 재발급 성공 시 같은 경로로 리다이렉트
         const response = NextResponse.redirect(new URL('/', request.url));
         if (setCookie) {
           response.headers.set('set-cookie', setCookie);
@@ -285,7 +106,6 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // 재발급 실패하거나 무효한 토큰인 경우 쿠키 삭제하고 메인 페이지 유지
     const response = NextResponse.next();
     response.cookies.delete('Authorization');
     return response;
@@ -302,10 +122,12 @@ export async function middleware(request: NextRequest) {
   }
 
   /* -------- 토큰 검증 -------- */
-  const verification = await verifyToken(token);
+  const verification = await verifyToken(token, {
+    audience: JWT_AUDIENCE,
+    allowedRoles: ALLOWED_ROLES,
+  });
 
   if (verification.payload) {
-    // 유효한 토큰이 있는 경우 권한 체크
     if (!hasPermission(verification.payload.ROLE, pathname)) {
       const defaultPath = getDefaultPath(verification.payload.ROLE);
       const redirectUrl = addMessageToUrl(
@@ -319,12 +141,11 @@ export async function middleware(request: NextRequest) {
   }
 
   if (verification.isExpired) {
-    // 만료된 토큰이면 재발급 시도
-    const { ok, setCookie } = await reissueToken(request);
+    const { ok, setCookie } = await reissueToken(request, {
+      endpoint: REISSUE_ENDPOINT,
+    });
 
     if (ok) {
-      // 재발급 성공 시 같은 경로로 리다이렉트하되,
-      // 재발급된 토큰의 역할도 다시 검증해야 함
       const response = NextResponse.redirect(new URL(pathname, request.url));
       if (setCookie) {
         response.headers.set('set-cookie', setCookie);
@@ -332,7 +153,6 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    // 재발급 실패 시 만료 메시지와 함께 로그인 페이지로
     const response = NextResponse.redirect(
       addMessageToUrl(
         new URL('/', request.url),
@@ -358,5 +178,5 @@ export async function middleware(request: NextRequest) {
 
 /* -------------------------------------------------------------------------- */
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|auth).*)'],
+  matcher: ['/((?!api|_next|favicon.ico|fonts|images|icons|preview|auth).*)'],
 };

@@ -7,8 +7,8 @@ export const useGetLatestContents = () => {
   return useQuery<RecentContentData[]>({
     queryKey: ['latestContents'],
     queryFn: () => getLatestContents(10),
-    staleTime: 0, // 바로 stale
-    gcTime: 0, // 캐시 즉시 삭제
+    staleTime: 60 * 1000, // 60초 fresh (RSC prefetch 활용)
+    gcTime: 5 * 60 * 1000, // 5분 캐시 유지
     refetchOnWindowFocus: false, // UX 보호용
     retry: 2, // 자동 재시도(최대 2번까지)
     retryDelay: 1000, // 재시도 딜레이(1초)

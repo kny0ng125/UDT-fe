@@ -1,5 +1,3 @@
-'use client';
-
 import { Suspense } from 'react';
 import { LoadingScreen } from '@components/common/LoadingScreen';
 import SurveyFlow from '@app/survey/SurveyFlow';
