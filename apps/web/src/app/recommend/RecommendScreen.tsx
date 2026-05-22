@@ -271,15 +271,6 @@ export function RecommendScreen({ onComplete }: Readonly<RecommendProps>) {
     }
   }, [shouldShowFinish()]);
 
-  if (isTransitioning) {
-    return (
-      <LoadingScreen
-        message="추천 결과를 준비하고 있어요!"
-        submessage="곧 완성된 결과를 보여드릴게요..."
-      />
-    );
-  }
-
   if (shouldShowFinish()) {
     toast.dismiss();
     return <FinishScreen />;
@@ -325,7 +316,14 @@ export function RecommendScreen({ onComplete }: Readonly<RecommendProps>) {
 
   // ── 렌더링 ─────────────────────────────────────
   return (
-    <div className="flex flex-col w-full h-full items-center justify-center gap-y-5 sm:gap-y-7 overflow-y-auto">
+    <div className="relative flex flex-col w-full h-full items-center justify-center gap-y-5 sm:gap-y-7 overflow-y-auto">
+      {/* 결과 보기 전환 로딩: 스와이프 화면 위에 dim 오버레이 */}
+      {isTransitioning && (
+        <LoadingScreen
+          message="추천 결과를 준비하고 있어요!"
+          submessage="곧 완성된 결과를 보여드릴게요..."
+        />
+      )}
       <div className="flex flex-col text-xl md:text-2xl w-full h-[5%] justify-center items-center">
         컨텐츠에 대한 피드백을 남겨주세요! 🤔
       </div>

@@ -125,7 +125,8 @@ export const ResultScreen: FC = () => {
     setResultCurrentIndex(newIndex);
   };
 
-  if (isLoading || isFetching) {
+  // 초기 진입(데이터 없음)은 전체 화면 로딩. refetch는 아래 메인 위 오버레이로 처리.
+  if (isLoading) {
     return (
       <LoadingScreen
         message="추천 컨텐츠를 선별하고 있어요!"
@@ -192,7 +193,14 @@ export const ResultScreen: FC = () => {
   }
 
   return (
-    <div className="flex w-full h-full flex-col justify-center overflow-y-auto overflow-x-hidden">
+    <div className="relative flex w-full h-full flex-col justify-center overflow-y-auto overflow-x-hidden">
+      {/* 다시 추천받기 등 refetch 전환 로딩: 결과 화면 위에 dim 오버레이 */}
+      {isFetching && (
+        <LoadingScreen
+          message="추천 컨텐츠를 선별하고 있어요!"
+          submessage="조금만 기다려주세요.."
+        />
+      )}
       <div className="text-center py-5">
         <h1 className="text-2xl font-bold mb-1">추천 결과</h1>
         <p className="text-gray-500">마음에 드는 콘텐츠를 선택해보세요</p>

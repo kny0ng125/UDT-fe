@@ -404,6 +404,37 @@
     opacity: 0;
   }
 
+  @keyframes loading-bar {
+    0%,
+    100% {
+      transform: scaleY(0.4);
+      opacity: 0.6;
+    }
+    50% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-loading-bar {
+    animation: loading-bar 1s ease-in-out infinite;
+  }
+
+  /* 점 펄스 로딩: 투명도만 변화(0.15↔1), 크기 고정. delay 차등으로 웨이브 */
+  @keyframes loading-dot {
+    0%,
+    100% {
+      opacity: 0.15;
+    }
+    40% {
+      opacity: 1;
+    }
+  }
+
+  .animate-loading-dot {
+    animation: loading-dot 1.2s ease-in-out infinite;
+  }
+
   .glow-effect {
     filter: drop-shadow(0 0 20px rgba(255, 250, 205, 0.8))
       drop-shadow(0 0 40px rgba(255, 250, 205, 0.6))

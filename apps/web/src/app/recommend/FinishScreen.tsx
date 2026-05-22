@@ -51,18 +51,16 @@ export const FinishScreen: React.FC = () => {
     setPhase('start');
   };
 
-  // 로딩 상태일 때 LoadingScreen 표시
-  if (isLoadingResults) {
-    return (
-      <LoadingScreen
-        message="추천 결과를 불러오고 있어요!"
-        submessage="곧 완성된 결과를 보여드릴게요..."
-      />
-    );
-  }
-
   return (
     <div className="w-full h-full flex items-center justify-center relative overflow-hidden">
+      {/* 결과 보러가기 전환 로딩: 완료 화면 위에 dim 오버레이 */}
+      {isLoadingResults && (
+        <LoadingScreen
+          message="추천 결과를 불러오고 있어요!"
+          submessage="곧 완성된 결과를 보여드릴게요..."
+        />
+      )}
+
       {/* Animated stars background */}
       <div className="absolute inset-0">
         {[...Array(50)].map((_, i) => (
