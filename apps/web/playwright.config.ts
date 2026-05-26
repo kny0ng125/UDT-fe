@@ -1,13 +1,13 @@
-// playwright.config.ts - 수동 서버 버전 (webServer 제거)
 import { defineConfig, devices } from '@playwright/test';
+import { STORAGE_STATE_PATH } from './tests/e2e/global-setup';
 
 export default defineConfig({
-  testDir: './tests',
-  testMatch: ['**/auth-test.spec.ts'],
+  testDir: './tests/e2e/specs',
   fullyParallel: true,
   retries: process.env.CI ? 2 : 1,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
+  globalSetup: require.resolve('./tests/e2e/global-setup'),
 
   use: {
     trace: 'on-first-retry',
@@ -17,6 +17,7 @@ export default defineConfig({
     ignoreHTTPSErrors: true,
     actionTimeout: 10000,
     navigationTimeout: 30000,
+    storageState: STORAGE_STATE_PATH,
   },
 
   projects: [
@@ -29,7 +30,4 @@ export default defineConfig({
       use: { ...devices['Pixel 5'] },
     },
   ],
-
-  // webServer 설정을 주석 처리하거나 제거
-  // webServer: { ... }
 });

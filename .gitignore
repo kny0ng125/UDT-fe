@@ -26,6 +26,8 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+**/tests/e2e/.auth/
+**/e2e/reports/
 
 # storybook
 storybook-static/

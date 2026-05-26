@@ -1,0 +1,39 @@
+id: auth-page-access
+title: 로그인된 사용자의 주요 페이지 접근
+spec_source:
+  type: notion
+  ref: TODO
+
+preconditions:
+  authenticated_as: ROLE_USER
+
+goals:
+  - 로그인된 ROLE_USER가 /recommend, /explore, /profile 페이지에 접근할 수 있어야 한다
+  - 각 페이지는 정상적으로 렌더링되어야 한다 (body 가시성)
+
+flow:
+  - step: 추천 페이지 진입
+    action: { goto: /recommend }
+    expect:
+      - body_visible: true
+      - url_matches: ^.*recommend
+
+  - step: 탐색 페이지 진입
+    action: { goto: /explore }
+    expect:
+      - body_visible: true
+      - url_matches: ^.*explore
+
+  - step: 프로필 페이지 진입
+    action: { goto: /profile }
+    expect:
+      - body_visible: true
+      - url_matches: ^.*profile
+
+device_profiles:
+  - chromium
+  - mobile-chrome
+
+risk_tags:
+  - auth
+  - routing
