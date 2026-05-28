@@ -3,22 +3,15 @@
 import { useState } from 'react';
 import { LogOut } from 'lucide-react';
 import { Button } from '@udt/ui/components/button';
-import AdminDashboard from '@components/admin/AdminDashboard';
-import { JobMonitor } from '@components/admin/batch/JobMonitor';
-import { SmoothExpandableSidebar } from '@components/admin/SmoothExpandableSidebar';
-import UserManagement from '@components/admin/userManagement/UserManagement';
-import { BatchResultDashboard } from '@components/admin/batch/BatchResultDashboard';
+import AdminDashboard from '@components/AdminDashboard';
+import { JobMonitor } from '@components/batch/JobMonitor';
+import { SmoothExpandableSidebar } from '@components/SmoothExpandableSidebar';
+import UserManagement from '@components/userManagement/UserManagement';
 import Image from 'next/image';
 import { useLogoutHandler } from '@hooks/useLogoutHandler';
 
-// 탭 종류 정의
-type TabType =
-  | 'job-monitor'
-  | 'content-management'
-  | 'member-management'
-  | 'batch-result';
+type TabType = 'job-monitor' | 'content-management' | 'member-management';
 
-// 각 탭에 대한 정보를 포함하는 객체
 const tabConfig = {
   'content-management': {
     title: '콘텐츠 관리',
@@ -26,14 +19,9 @@ const tabConfig = {
     component: AdminDashboard,
   },
   'job-monitor': {
-    title: '작업 모니터',
-    description: '대기 중·실패·무효 작업을 한 화면에서 확인하고 처리합니다',
+    title: '요청 모니터',
+    description: '대기 중·실패·무효 요청의 처리 상태를 실시간으로 확인합니다',
     component: JobMonitor,
-  },
-  'batch-result': {
-    title: '배치 결과',
-    description: '처리 완료된 배치 작업의 집계 결과를 확인할 수 있습니다',
-    component: BatchResultDashboard,
   },
   'member-management': {
     title: '회원 정보 관리',
@@ -42,17 +30,15 @@ const tabConfig = {
   },
 };
 
-// 관리 페이지의 최상단 컴포넌트
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('content-management'); // 현재 활성화된 탭
+  const [activeTab, setActiveTab] = useState<TabType>('content-management');
   const { handleLogout } = useLogoutHandler();
 
-  const currentTab = tabConfig[activeTab]; // 현재 탭에 관한 정보 포함하는 객체
-  const CurrentComponent = currentTab.component; // 현재 탭에 관한 컴포넌트
+  const currentTab = tabConfig[activeTab];
+  const CurrentComponent = currentTab.component;
 
   return (
     <div className="min-h-screen flex flex-col bg-background transition-all duration-300 ease-out">
-      {/* 동적 헤더 */}
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
         <div className="flex flex-row justify-start items-center">
           <Image
@@ -73,7 +59,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* 로그아웃 버튼 */}
         <Button
           variant="outline"
           size="sm"
@@ -85,14 +70,11 @@ export default function AdminPage() {
         </Button>
       </header>
 
-      {/* 메인 콘텐츠 영역 */}
       <div className="relative flex-1">
-        {/* 전체 확장 사이드바 */}
         <SmoothExpandableSidebar
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
-        {/* 페이지 콘텐츠 */}
         <main className="ml-16 p-6">
           <div
             key={activeTab}

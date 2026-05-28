@@ -1,71 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, reissueToken } from '@udt/shared/auth';
-
-/* -------------------------------------------------------------------------- */
-/* 정책                                                                       */
-/* -------------------------------------------------------------------------- */
-// ADMIN 역할 제거 - ROLE_USER와 ROLE_GUEST만 허용
-const ROLE_RESTRICTIONS = {
-  ROLE_GUEST: {
-    allowed: ['/survey'],
-    denied: [],
-  },
-  ROLE_USER: {
-    allowed: [],
-    denied: ['/survey'],
-  },
-} as const;
-
-const ALLOWED_ROLES = ['ROLE_USER', 'ROLE_GUEST'] as const;
-type AllowedRole = (typeof ALLOWED_ROLES)[number];
+import {
+  ALLOWED_ROLES,
+  addMessageToUrl,
+  getDefaultPath,
+  hasPermission,
+} from '@lib/middleware-helpers';
 
 // 백엔드(TokenProvider)가 RS256 + web 토큰에 aud="web"으로 서명함.
 const JWT_AUDIENCE = 'web';
 const REISSUE_ENDPOINT = '/api/auth/reissue/token';
-
-/* -------------------------------------------------------------------------- */
-/* 유틸 함수                                                                  */
-/* -------------------------------------------------------------------------- */
-function addMessageToUrl(url: URL, type: string, message: string): URL {
-  const encodedMessage = Buffer.from(message, 'utf-8').toString('base64');
-  url.searchParams.set('auth_msg', type);
-  url.searchParams.set('auth_text', encodedMessage);
-  return url;
-}
-
-function isValidRole(role: string): role is AllowedRole {
-  return ALLOWED_ROLES.includes(role as AllowedRole);
-}
-
-function hasPermission(role: string, pathname: string): boolean {
-  if (!isValidRole(role)) return false;
-
-  const restrictions = ROLE_RESTRICTIONS[role];
-
-  if (role === 'ROLE_GUEST') {
-    return restrictions.allowed.some((path) => pathname.startsWith(path));
-  }
-
-  if (role === 'ROLE_USER') {
-    const isDenied = restrictions.denied.some((path) =>
-      pathname.startsWith(path),
-    );
-    return !isDenied;
-  }
-
-  return false;
-}
-
-function getDefaultPath(role: string): string {
-  switch (role) {
-    case 'ROLE_GUEST':
-      return '/survey';
-    case 'ROLE_USER':
-      return '/recommend';
-    default:
-      return '/';
-  }
-}
 
 /* -------------------------------------------------------------------------- */
 /* 미들웨어                                                                   */

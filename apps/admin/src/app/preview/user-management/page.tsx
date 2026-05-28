@@ -1,6 +1,6 @@
 'use client';
 
-import UserManagement from '@components/admin/userManagement/UserManagement';
+import UserManagement from '@components/userManagement/UserManagement';
 import PreviewBanner from '@app/preview/PreviewBanner';
 
 export default function PreviewUserManagementPage() {

@@ -8,12 +8,13 @@ interface UsePostCuratedContentOptions {
   showToast?: boolean; // Toast 표시 여부 (기본값: true)
   onOptimisticUpdate?: (contentId: number) => void; // 즉시 UI 업데이트
   onOptimisticRevert?: (contentId: number) => void;
+  retry?: number; // 재시도 횟수 (기본값: 3, 테스트에서 0으로 비활성화 가능)
 }
 
 export const usePostCuratedContent = (
   options?: UsePostCuratedContentOptions,
 ) => {
-  const { showToast = true } = options || {};
+  const { showToast = true, retry = 3 } = options || {};
 
   return useMutation({
     mutationFn: async (contentId: number) => {
@@ -21,7 +22,7 @@ export const usePostCuratedContent = (
       return { contentId }; // 성공 시 contentId 반환
     },
 
-    retry: 3,
+    retry,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
 
     onMutate: (contentId: number) => {
@@ -45,11 +46,16 @@ export const usePostCuratedContent = (
       options?.onOptimisticRevert?.(contentId);
       options?.onErrorCallback?.(error);
 
-      // 에러 메시지 파싱
+      // axios는 응답 body를 error.message에 넣지 않으므로 둘 다 검사
+      const responseMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message ?? '';
+      const combined = `${error.message} ${responseMessage}`;
+
       const isAlreadyExists =
-        error.message.includes('이미 저장된') ||
-        error.message.includes('already exists') ||
-        error.message.includes('409');
+        combined.includes('이미 저장된') ||
+        combined.includes('already exists') ||
+        combined.includes('409');
 
       const errorMessage = isAlreadyExists
         ? '이미 저장된 콘텐츠입니다.'
