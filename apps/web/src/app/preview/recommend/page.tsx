@@ -1,32 +1,23 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import RecommendationPage from '@app/recommend/page';
 import { useRecommendStore } from '@store/useRecommendStore';
-import type { TicketComponent } from '@type/recommend/TicketComponent';
+import { getCurrentCuratedContentKey } from '@hooks/recommend/useGetCuratedContents';
+import { PreviewQueryProvider } from '../_mocks/PreviewQueryProvider';
+import { PreviewFrame } from '../_mocks/PreviewFrame';
+import { mockMoviePool, mockCuratedContents } from '../_mocks/recommend';
 
-const PREVIEW_MOVIES: TicketComponent[] = Array.from({ length: 10 }).map(
-  (_, i) => ({
-    contentId: 1000 + i,
-    title: `샘플 콘텐츠 ${i + 1}`,
-    description:
-      '미리보기용 mock 콘텐츠입니다. 실제 API 응답 없이도 카드 UI를 확인할 수 있도록 더미 데이터로 채워졌습니다.',
-    posterUrl: '/images/default-poster.png',
-    backdropUrl: '/images/default-backdrop.png',
-    openDate: '2026-01-01',
-    runningTime: 120,
-    episode: '0',
-    rating: '15세',
-    category: '영화',
-    genres: ['액션', 'SF'],
-    directors: ['샘플 감독'],
-    casts: ['샘플 배우 1', '샘플 배우 2'],
-    platforms: ['NETFLIX'],
-    watchUrls: ['https://example.com/watch'],
-  }),
-);
+type Phase = 'start' | 'recommend' | 'result';
 
-export default function PreviewRecommendPage() {
+// recommend 는 react-query 가 아니라 zustand(moviePool) + phase 흐름으로 동작.
+// ?phase=start|recommend|result 로 단계별 미리보기 (기본 recommend).
+// result phase 의 useGetCuratedContents(react-query)는 PreviewQueryProvider 로 시딩.
+function PreviewRecommendInner() {
+  const params = useSearchParams();
+  const phase = (params.get('phase') as Phase) || 'recommend';
+
   const setMoviePool = useRecommendStore((s) => s.setMoviePool);
   const setPhase = useRecommendStore((s) => s.setPhase);
   const initSaved = useRecommendStore((s) => s.initializeSavedContentIds);
@@ -35,18 +26,32 @@ export default function PreviewRecommendPage() {
   );
 
   useEffect(() => {
-    setMoviePool(PREVIEW_MOVIES);
-    setPhase('recommend');
-    initSaved(PREVIEW_MOVIES.length);
-    initResultSaved(PREVIEW_MOVIES.length);
-  }, [setMoviePool, setPhase, initSaved, initResultSaved]);
+    setMoviePool(mockMoviePool);
+    initSaved(mockMoviePool.length);
+    initResultSaved(mockMoviePool.length);
+    setPhase(phase);
+  }, [phase, setMoviePool, setPhase, initSaved, initResultSaved]);
 
   return (
-    <div className="relative w-full min-h-[100svh]">
-      <div className="sticky top-0 z-[100] bg-yellow-400/90 text-black text-xs text-center py-1">
-        🧪 Preview — recommend (mock movie pool 10개, phase=recommend)
-      </div>
+    <PreviewFrame label={`recommend · phase=${phase}`}>
       <RecommendationPage />
-    </div>
+    </PreviewFrame>
+  );
+}
+
+export default function PreviewRecommendPage() {
+  return (
+    <PreviewQueryProvider
+      seeds={[
+        {
+          queryKey: ['curatedContents', getCurrentCuratedContentKey()],
+          data: mockCuratedContents,
+        },
+      ]}
+    >
+      <Suspense fallback={null}>
+        <PreviewRecommendInner />
+      </Suspense>
+    </PreviewQueryProvider>
   );
 }

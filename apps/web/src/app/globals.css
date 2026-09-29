@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* @udt/ui 컴포넌트(Button 등)의 Tailwind 클래스를 스캔 — 없으면 inline-flex·size-9 등
+   @udt/ui 전용 클래스가 CSS에 생성되지 않아 컴포넌트 정렬/사이즈가 깨진다. */
+@source '../../../../packages/ui/src';
+
 @custom-variant dark (&:is(.dark *));
 
 @font-face {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import ProfilePage from '@app/profile/page';
+import ProfileClient from '@app/profile/ProfileClient';
 import type { UserProfile } from '@udt/shared/types/auth/UserProfile';
 
 const MOCK_PROFILE: UserProfile = {
@@ -30,7 +30,7 @@ export default function PreviewProfilePage() {
       <div className="sticky top-0 z-[100] bg-yellow-400/90 text-black text-xs text-center py-1">
         🧪 Preview — profile (mock user, react-query cache 주입)
       </div>
-      <ProfilePage />
+      <ProfileClient />
     </div>
   );
 }
