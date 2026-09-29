@@ -48,9 +48,12 @@ export default function DetailedInfo({
   const openDateErr = getFieldError?.('openDate');
   const runningTimeErr = getFieldError?.('runningTime');
   const episodeErr = getFieldError?.('episode');
-  const categoryErr = getFieldError?.('categories');
   const genresErr =
     getFieldError?.('genres') ?? getFieldError?.('categories.genres');
+  // 'categories' 는 prefix 매칭이라 장르 오류까지 잡는다. 장르 오류는 장르 칸에만 표시.
+  const categoryErr =
+    getFieldError?.('categories.categoryType') ??
+    (genresErr ? undefined : getFieldError?.('categories'));
   const countriesErr = getFieldError?.('countries');
 
   return (

@@ -6,7 +6,7 @@ import { extractBulkValidationError } from '@utils/admin/extractBulkValidationEr
 import { createQueryWrapper } from '../_helpers/queryClient';
 import * as Toast from '@udt/ui/common/Toast';
 
-const PATH = '/api/admin/contents/registerjob';
+const PATH = '/api/admin/contents';
 
 let successSpy: jest.SpyInstance;
 
@@ -36,7 +36,7 @@ describe('usePostContent', () => {
     expect(receivedBody).toEqual({ title: 'Inception' });
   });
 
-  test('PC2: 성공 → invalidate + "콘텐츠 등록 요청이 전송되었습니다." 토스트', async () => {
+  test('PC2: 성공 → invalidate + "콘텐츠가 등록되었습니다." 토스트', async () => {
     server.use(http.post(PATH, () => HttpResponse.json({ registerJobId: 1 })));
     const { Wrapper, queryClient } = createQueryWrapper();
     const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
@@ -48,7 +48,7 @@ describe('usePostContent', () => {
     });
     expect(successSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        message: '콘텐츠 등록 요청이 전송되었습니다.',
+        message: '콘텐츠가 등록되었습니다.',
       }),
     );
   });

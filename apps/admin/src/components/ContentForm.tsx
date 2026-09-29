@@ -45,6 +45,9 @@ export type FieldErrorLookup = (
 ) => JobValidationError | undefined;
 
 // 폼 데이터 초기값
+// 'categories[0].genres[1]' -> 'categories.genres'
+const normalizeFieldPath = (field: string) => field.replace(/\[\d+\]/g, '');
+
 const getInitialFormData = (content?: ContentWithoutId): ContentWithoutId => ({
   title: content?.title || '',
   description: content?.description || '',
@@ -95,6 +98,8 @@ export default function ContentForm({
 
   // 서버 검증 실패 필드 lookup. 필드명이 'platforms.0.watchUrl', 'platforms.watchUrl', 'platforms' 등
   // 어느 깊이로 와도 prefix 매칭으로 잡힘.
+  // 백엔드는 인덱스를 붙여 보낸다(예: 'categories[0].genres[1]'). 인덱스를 뺀 경로
+  // ('categories.genres')로도 찾을 수 있게 정규화해서 한 번 더 비교한다.
   const getFieldError = useMemo(() => {
     if (!validationErrors || validationErrors.length === 0) {
       return () => undefined;
@@ -104,7 +109,9 @@ export default function ContentForm({
         (e) =>
           e.field === fieldPath ||
           e.field.startsWith(`${fieldPath}.`) ||
-          e.field.startsWith(`${fieldPath}[`),
+          e.field.startsWith(`${fieldPath}[`) ||
+          normalizeFieldPath(e.field) === fieldPath ||
+          normalizeFieldPath(e.field).startsWith(`${fieldPath}.`),
       );
     };
   }, [validationErrors]);

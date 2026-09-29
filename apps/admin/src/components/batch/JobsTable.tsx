@@ -9,22 +9,22 @@ import {
 import { Badge } from '@udt/ui/components/badge';
 import { Button } from '@udt/ui/components/button';
 import { AnimatePresence, motion } from 'framer-motion';
+import type { ContentJob, ContentJobFilterType } from '@type/admin/ContentJob';
 
 const MotionTableRow = motion.create(TableRow);
 
-export type MonitorStatus = 'PENDING' | 'FAILED' | 'INVALID';
+export type MonitorStatus = ContentJobFilterType;
 type MonitorFilter = MonitorStatus | 'ALL';
 
-export type JobItem = {
-  id: number;
-  status: MonitorStatus | 'COMPLETED' | 'PROCESSING';
-  memberId: number;
-  createdAt: string;
-  updateAt: string;
-  finishedAt?: string;
-  jobType: 'REGISTER' | 'UPDATE' | 'DELETE';
-  scheduledAt: string;
-};
+export type JobItem = ContentJob;
+
+/** 작업 id 는 종류별 테이블 PK 라 종류가 다르면 겹칠 수 있다. 행 식별은 이 키로 한다. */
+export const jobKey = (job: Pick<ContentJob, 'jobType' | 'id'>) =>
+  `${job.jobType}-${job.id}`;
+
+// '2026-05-14T10:22:30.123' -> '2026-05-14 10:22:30'
+const formatTime = (value: string | null | undefined) =>
+  value ? value.replace('T', ' ').slice(0, 19) : '-';
 
 const STATUS_COPY: Record<
   MonitorFilter,
@@ -54,6 +54,7 @@ const REQUEST_STATUS_CONFIG = {
   COMPLETED: { label: '성공', color: 'bg-green-100 text-green-800' },
   PENDING: { label: '대기중', color: 'bg-orange-100 text-orange-800' },
   PROCESSING: { label: '처리중', color: 'bg-blue-100 text-blue-800' },
+  RETRYING: { label: '재시도중', color: 'bg-blue-100 text-blue-800' },
 } as const;
 
 interface JobsTableViewProps {
@@ -65,16 +66,17 @@ interface JobsTableViewProps {
   onResetFilter?: () => void;
   onDetailClick?: (jobId: number, jobType: string) => void;
   onRetryClick?: (jobId: number, jobType: string) => void;
-  highlightedJobId?: number | null;
+  highlightedJobKey?: string | null;
   loadMoreRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 function pickTime(job: JobItem): string {
-  if (job.status === 'PENDING') return job.scheduledAt || job.createdAt;
+  if (job.status === 'PENDING')
+    return formatTime(job.scheduledAt || job.createdAt);
   if (job.status === 'FAILED' || job.status === 'INVALID') {
-    return job.finishedAt || job.createdAt;
+    return formatTime(job.finishedAt || job.createdAt);
   }
-  return job.createdAt;
+  return formatTime(job.createdAt);
 }
 
 export function JobsTableView({
@@ -86,7 +88,7 @@ export function JobsTableView({
   onResetFilter,
   onDetailClick,
   onRetryClick,
-  highlightedJobId,
+  highlightedJobKey,
   loadMoreRef,
 }: JobsTableViewProps) {
   const copy = STATUS_COPY[status];
@@ -151,10 +153,10 @@ export function JobsTableView({
                   {jobs.map((request) => {
                     const isInvalid = request.status === 'INVALID';
                     const isFailed = request.status === 'FAILED';
-                    const highlighted = highlightedJobId === request.id;
+                    const highlighted = highlightedJobKey === jobKey(request);
                     return (
                       <MotionTableRow
-                        key={`${request.id}-${request.status}`}
+                        key={`${jobKey(request)}-${request.status}`}
                         layout
                         initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -173,7 +175,7 @@ export function JobsTableView({
                         </TableCell>
                         <TableCell>{request.jobType}</TableCell>
                         <TableCell>{request.memberId}</TableCell>
-                        <TableCell>{request.createdAt}</TableCell>
+                        <TableCell>{formatTime(request.createdAt)}</TableCell>
                         <TableCell>{pickTime(request)}</TableCell>
                         <TableCell>
                           <Badge

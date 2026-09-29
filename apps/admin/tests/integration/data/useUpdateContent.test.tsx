@@ -5,7 +5,7 @@ import { useUpdateContent } from '@hooks/admin/usePatchContent';
 import { createQueryWrapper } from '../_helpers/queryClient';
 import * as Toast from '@udt/ui/common/Toast';
 
-const PATH = '/api/admin/contents/updatejob/:contentId';
+const PATH = '/api/admin/contents/:contentId/update';
 
 let successSpy: jest.SpyInstance;
 
@@ -71,7 +71,7 @@ describe('useUpdateContent', () => {
     });
   });
 
-  test('UC4: 성공 → "콘텐츠 수정 요청이 전송되었습니다." 토스트', async () => {
+  test('UC4: 성공 → "콘텐츠가 수정되었습니다." 토스트', async () => {
     server.use(http.post(PATH, () => HttpResponse.json({ updateJobId: 1 })));
     const { Wrapper } = createQueryWrapper();
     const { result } = renderHook(() => useUpdateContent(), {
@@ -81,7 +81,7 @@ describe('useUpdateContent', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(successSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        message: '콘텐츠 수정 요청이 전송되었습니다.',
+        message: '콘텐츠가 수정되었습니다.',
       }),
     );
   });

@@ -4,7 +4,7 @@ import { server } from '../../mocks/server';
 import { useDeleteContent } from '@hooks/admin/useDeleteContent';
 import { createQueryWrapper } from '../_helpers/queryClient';
 
-const PATH = '/api/admin/contents/deletejob/:contentId';
+const PATH = '/api/admin/contents/:contentId/delete';
 
 describe('useDeleteContent', () => {
   test('DC1: mutate(contentId) → deleteContent로 contentId 전달', async () => {
