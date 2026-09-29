@@ -19,9 +19,10 @@
     "build:admin": "turbo run build --filter=@udt/admin",
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
-    "test": "turbo run test",
-    "test:unit": "jest",
-    "test:e2e": "turbo run test:e2e --filter=@udt/web",
+    "test": "jest",
+    "test:selected": "jest -t \"@critical|@selected\"",
+    "test:changed": "jest --changedSince=origin/dev",
+    "test:watch": "jest --watch",
     "storybook": "turbo run storybook",
     "format": "prettier --write .",
     "prepare": "husky"
@@ -35,12 +36,10 @@
     "@types/jest": "^30.0.0",
     "husky": "^9.1.7",
     "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
     "jest-fixed-jsdom": "^0.0.11",
     "lint-staged": "^16.1.2",
     "msw": "^2.14.6",
     "prettier": "^3",
-    "ts-jest": "^29.4.6",
     "turbo": "^2"
   },
   "lint-staged": {

@@ -1,0 +1,30 @@
+name: Unit/Integration Tests (tag-selected)
+
+# PR에서 @critical + @selected 태그가 붙은 단위/통합 테스트만 실행한다.
+# 태그는 /test-coverage(Claude)가 변경사항 기반으로 @selected/@notSelected 를 부여하고,
+# @critical 은 사람이 수동 관리하는 항상-실행 안전망이다.
+# 규약: docs/testing/test-tags.md
+#
+# [상태] 아직 비활성. 활성화하려면 파일명을 test.yml 로 되돌린다(.disabled 제거).
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: 태그 선별 테스트 실행 (@critical + @selected)
+        # @selected 가 하나도 없는 변경(테스트 불필요)이면 @critical 만 실행된다.
+        # 태깅 자체를 빠뜨린 PR 을 막으려면 --passWithNoTests 를 떼고 별도 가드를 둔다.
+        run: npx jest -t "@critical|@selected" --ci --passWithNoTests
