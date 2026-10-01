@@ -22,6 +22,9 @@ export const useUpdateContent = () => {
       // 콘텐츠 목록 무효화
       queryClient.invalidateQueries({ queryKey: ['infiniteAdminContentList'] });
 
+      // 카테고리별 개수(차트)도 갱신
+      queryClient.invalidateQueries({ queryKey: ['categoryMetrics'] });
+
       // 콘텐츠 상세 정보도 무효화
       queryClient.invalidateQueries({
         queryKey: ['adminContentDetail', contentId],

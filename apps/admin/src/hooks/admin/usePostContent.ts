@@ -11,6 +11,8 @@ export const usePostContent = () => {
     mutationFn: (data: ContentCreateUpdate) => postContent(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['infiniteAdminContentList'] });
+      // 카테고리별 개수(차트)도 갱신
+      queryClient.invalidateQueries({ queryKey: ['categoryMetrics'] });
       showSimpleToast.success({
         message: '콘텐츠가 등록되었습니다.',
         position: 'top-center',

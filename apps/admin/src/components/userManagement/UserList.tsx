@@ -27,7 +27,7 @@ export default function UserList({
   loadMoreRef,
 }: Props) {
   return (
-    <Card className="bg-white shadow-sm">
+    <Card className="bg-white shadow-sm py-5 gap-4">
       <CardHeader>
         <div>
           <CardTitle className="text-xl font-semibold text-gray-900">
