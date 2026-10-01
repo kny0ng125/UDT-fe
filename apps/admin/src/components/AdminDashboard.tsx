@@ -28,8 +28,10 @@ import { useGetContentDetail } from '@hooks/admin/useGetContentDetail';
 import { useMutationErrorToast } from '@udt/shared/hooks/useMutationErrorToast';
 import { extractBulkValidationError } from '@utils/admin/extractBulkValidationError';
 import ContentForm from '@components/ContentForm';
+import ContentSheet from '@components/ContentSheet';
 import ContentCard from '@components/ContentCard';
 import CategoryChart from '@components/CategoryChart';
+import StatePanel from '@components/StatePanel';
 import ContentDetail from '@components/ContentDetail';
 import SearchFilter from '@components/SearchFilter';
 import { useGetCategoryMetrics } from '@hooks/admin/useGetCategoryMetrics';
@@ -40,6 +42,7 @@ export default function AdminDashboard() {
     data: categoryMetricsData,
     isLoading: isMetricsLoading,
     error: metricsError,
+    refetch: refetchMetrics,
   } = useGetCategoryMetrics();
 
   const [categoryType, setCategoryType] = useState<string>('');
@@ -58,8 +61,15 @@ export default function AdminDashboard() {
   const size = 20;
 
   // 무한 스크롤 쿼리
-  const { data, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteAdminContentList({ size, categoryType });
+  const {
+    data,
+    isLoading: isContentsLoading,
+    isError,
+    refetch: refetchContents,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteAdminContentList({ size, categoryType });
 
   // Intersection Observer로 하단 감지
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -110,6 +120,7 @@ export default function AdminDashboard() {
 
   // 모달 상태 관리 (독립적으로 관리)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isSheetDialogOpen, setIsSheetDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -203,8 +214,6 @@ export default function AdminDashboard() {
     setIsEditDialogOpen(true);
   }, []);
 
-  if (isError) return <div>데이터를 불러오는 중 오류가 발생했습니다.</div>;
-
   // 모든 페이지의 콘텐츠 합치기
   const allContents = data?.pages.flatMap((page) => page.item) || [];
   const triggerIndex = useMemo(
@@ -218,42 +227,46 @@ export default function AdminDashboard() {
         {/* 콘텐츠 분포 차트 */}
         <div className="w-full flex justify-center">
           <div className="w-full max-w-5xl">
-            {isMetricsLoading ? (
-              <div className="text-center py-4">차트를 불러오는 중...</div>
-            ) : metricsError ? (
-              <div className="text-center py-4">카테고리 지표 로드 실패</div>
-            ) : !categoryMetricsData ? (
-              <div className="text-center py-4">카테고리 데이터가 없습니다</div>
-            ) : (
-              <CategoryChart
-                categoryMetrics={categoryMetricsData.categoryMetrics}
-              />
-            )}
+            <CategoryChart
+              categoryMetrics={categoryMetricsData?.categoryMetrics}
+              isLoading={isMetricsLoading}
+              isError={!!metricsError}
+              onRetry={() => refetchMetrics()}
+            />
           </div>
         </div>
 
         {/* 콘텐츠 목록 */}
-        <Card className="bg-white">
+        <Card className="bg-white py-5 gap-4">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-black text-2xl font-bold mt-2 mb-2">
+                <CardTitle className="text-xl font-semibold text-gray-900">
                   등록된 콘텐츠 목록
                 </CardTitle>
                 <CardDescription>
                   전체 {filteredCategoryCount}개의 콘텐츠
                 </CardDescription>
               </div>
-              <Button
-                className="bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-4 py-5 flex items-center font-semibold text-md min-w-[160px] cursor-pointer"
-                onClick={() => setIsAddDialogOpen(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />새 항목 추가
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  className="rounded-lg px-4 py-5 flex items-center font-semibold text-md cursor-pointer"
+                  onClick={() => setIsSheetDialogOpen(true)}
+                >
+                  시트로 등록
+                </Button>
+                <Button
+                  className="bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-4 py-5 flex items-center font-semibold text-md min-w-[160px] cursor-pointer"
+                  onClick={() => setIsAddDialogOpen(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />새 항목 추가
+                </Button>
+              </div>
             </div>
 
             {/* 검색 및 필터 */}
-            <div className="mt-1">
+            <div className="mt-3">
               <SearchFilter
                 filterType={categoryType}
                 onFilterChange={handleFilterChange}
@@ -263,32 +276,67 @@ export default function AdminDashboard() {
 
           <CardContent>
             <ScrollArea className="h-[500px]">
-              <div className="space-y-3 mb-3">
-                {allContents.map((content, idx) => (
-                  <div key={content.contentId}>
-                    <ContentCard
-                      content={content}
-                      onView={openDetailDialog}
-                      onEdit={openEditDialog}
-                      onDelete={handleDeleteContent}
-                    />
-                    {idx === triggerIndex && (
-                      <div ref={loadMoreRef} style={{ height: 1 }} />
-                    )}
-                  </div>
-                ))}
-              </div>
+              {isContentsLoading ? (
+                <StatePanel state="loading" className="h-[460px]" />
+              ) : isError ? (
+                <StatePanel
+                  state="error"
+                  className="h-[460px]"
+                  onRetry={() => refetchContents()}
+                />
+              ) : allContents.length === 0 ? (
+                <StatePanel
+                  state="empty"
+                  message="등록된 콘텐츠가 없어요."
+                  className="h-[460px]"
+                />
+              ) : (
+                <div className="space-y-4 mb-4">
+                  {allContents.map((content, idx) => (
+                    <div key={content.contentId}>
+                      <ContentCard
+                        content={content}
+                        onView={openDetailDialog}
+                        onEdit={openEditDialog}
+                        onDelete={handleDeleteContent}
+                      />
+                      {idx === triggerIndex && (
+                        <div ref={loadMoreRef} style={{ height: 1 }} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </ScrollArea>
             {isFetchingNextPage && (
               <div className="text-center py-2">불러오는 중...</div>
             )}
-            {!hasNextPage && (
-              <div className="text-center py-2">더 이상 데이터가 없습니다.</div>
-            )}
+            {!isContentsLoading &&
+              !isError &&
+              allContents.length > 0 &&
+              !hasNextPage && (
+                <div className="text-center py-2">
+                  더 이상 데이터가 없습니다.
+                </div>
+              )}
           </CardContent>
         </Card>
 
         {/* 다이얼로그들 */}
+        {isSheetDialogOpen && (
+          <Dialog open={isSheetDialogOpen} onOpenChange={setIsSheetDialogOpen}>
+            <DialogContent className="w-full max-w-none sm:max-w-[1200px] max-h-[85svh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>시트로 콘텐츠 등록</DialogTitle>
+                <DialogDescription>
+                  여러 콘텐츠를 표로 입력하고 한 번에 등록해요.
+                </DialogDescription>
+              </DialogHeader>
+              <ContentSheet onClose={() => setIsSheetDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        )}
+
         {isAddDialogOpen && (
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogContent className="w-full max-w-none sm:max-w-[1000px] max-h-[75svh] overflow-y-auto">
