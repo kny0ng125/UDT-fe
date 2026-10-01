@@ -64,12 +64,16 @@ export const useContentJobDetail = (jobType?: ContentJobType, jobId?: number) =>
 
 const useInvalidateJobs = () => {
   const queryClient = useQueryClient();
-  return () => {
-    queryClient.invalidateQueries({ queryKey: [CONTENT_JOBS_KEY] });
-    queryClient.invalidateQueries({ queryKey: [CONTENT_JOB_DETAIL_KEY] });
-    // 재처리가 성공하면 콘텐츠 목록도 바뀐다
-    queryClient.invalidateQueries({ queryKey: ['infiniteAdminContentList'] });
-  };
+  // 목록 갱신이 끝나면 resolve 된다. 재시도 훅은 이걸 onSuccess 에서 돌려줘서,
+  // 갱신된 결과가 화면에 반영될 때까지 '재시도 중' 표시를 유지한다.
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: [CONTENT_JOBS_KEY] }),
+      queryClient.invalidateQueries({ queryKey: [CONTENT_JOB_DETAIL_KEY] }),
+      // 재처리가 성공하면 콘텐츠 목록도 바뀐다
+      queryClient.invalidateQueries({ queryKey: ['infiniteAdminContentList'] }),
+      queryClient.invalidateQueries({ queryKey: ['categoryMetrics'] }),
+    ]);
 };
 
 // FAILED 단건 재시도
@@ -84,11 +88,11 @@ export const useRetryContentJob = () => {
       jobId: number;
     }) => postRetryContentJob(jobType, jobId),
     onSuccess: (_data, { jobId }) => {
-      invalidate();
       showSimpleToast.success({
         message: `요청 #${jobId} 재시도를 요청했습니다.`,
         position: 'top-center',
       });
+      return invalidate();
     },
   });
 };
@@ -99,11 +103,11 @@ export const useRetryAllFailedContentJobs = () => {
   return useMutation({
     mutationFn: () => postRetryAllFailedContentJobs(),
     onSuccess: () => {
-      invalidate();
       showSimpleToast.success({
         message: '실패한 요청 전체 재시도를 요청했습니다.',
         position: 'top-center',
       });
+      return invalidate();
     },
   });
 };

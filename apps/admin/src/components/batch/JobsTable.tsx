@@ -66,6 +66,8 @@ interface JobsTableViewProps {
   onResetFilter?: () => void;
   onDetailClick?: (jobId: number, jobType: string) => void;
   onRetryClick?: (jobId: number, jobType: string) => void;
+  /** 재시도 요청이 진행 중인 행(jobKey). 상태를 '대기중'으로 보여주고 재시도 버튼을 숨긴다. */
+  retryingKeys?: ReadonlySet<string>;
   highlightedJobKey?: string | null;
   loadMoreRef?: React.RefObject<HTMLDivElement | null>;
 }
@@ -88,6 +90,7 @@ export function JobsTableView({
   onResetFilter,
   onDetailClick,
   onRetryClick,
+  retryingKeys,
   highlightedJobKey,
   loadMoreRef,
 }: JobsTableViewProps) {
@@ -154,6 +157,15 @@ export function JobsTableView({
                     const isInvalid = request.status === 'INVALID';
                     const isFailed = request.status === 'FAILED';
                     const highlighted = highlightedJobKey === jobKey(request);
+                    const isRetrying =
+                      retryingKeys?.has(jobKey(request)) ?? false;
+                    // 재시도 중인 행은 목록상 FAILED 여도 '대기중'으로 보여준다.
+                    const badge =
+                      REQUEST_STATUS_CONFIG[
+                        isRetrying
+                          ? 'PENDING'
+                          : (request.status as keyof typeof REQUEST_STATUS_CONFIG)
+                      ];
                     return (
                       <MotionTableRow
                         key={`${jobKey(request)}-${request.status}`}
@@ -179,17 +191,9 @@ export function JobsTableView({
                         <TableCell>{pickTime(request)}</TableCell>
                         <TableCell>
                           <Badge
-                            className={`transition-[background-color,color] duration-700 ease-out ${
-                              REQUEST_STATUS_CONFIG[
-                                request.status as keyof typeof REQUEST_STATUS_CONFIG
-                              ].color
-                            }`}
+                            className={`transition-[background-color,color] duration-700 ease-out ${badge.color}`}
                           >
-                            {
-                              REQUEST_STATUS_CONFIG[
-                                request.status as keyof typeof REQUEST_STATUS_CONFIG
-                              ].label
-                            }
+                            {badge.label}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -203,7 +207,7 @@ export function JobsTableView({
                             >
                               상세보기
                             </Button>
-                          ) : isFailed && onRetryClick ? (
+                          ) : isFailed && onRetryClick && !isRetrying ? (
                             <Button
                               size="sm"
                               variant="default"

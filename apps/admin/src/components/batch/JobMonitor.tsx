@@ -27,6 +27,7 @@ import {
 } from '@hooks/admin/useContentJobs';
 import { useMutationErrorToast } from '@udt/shared/hooks/useMutationErrorToast';
 import type { ContentJobType } from '@type/admin/ContentJob';
+import { retryErrorMessage } from '@utils/admin/retryErrorMessage';
 
 type FilterValue = MonitorStatus | 'ALL';
 
@@ -167,8 +168,8 @@ export function JobMonitor() {
 
   const retryOne = useRetryContentJob();
   const retryAll = useRetryAllFailedContentJobs();
-  useMutationErrorToast(retryOne);
-  useMutationErrorToast(retryAll);
+  useMutationErrorToast(retryOne, retryErrorMessage(retryOne.error));
+  useMutationErrorToast(retryAll, retryErrorMessage(retryAll.error));
 
   const filterLabel = FILTER_OPTIONS.find((o) => o.value === filter)!.label;
   const filterLabelOptions = FILTER_OPTIONS.map((o) => o.label);
@@ -182,13 +183,27 @@ export function JobMonitor() {
 
   const hasFailed = jobs.some((j) => j.status === 'FAILED');
 
+  // 재시도 요청이 끝나고 목록이 갱신될 때까지 해당 행을 '대기중'으로 보여준다.
+  const retryingKeys = useMemo(() => {
+    if (retryAll.isPending) {
+      return new Set(
+        jobs.filter((j) => j.status === 'FAILED').map((j) => jobKey(j)),
+      );
+    }
+    if (retryOne.isPending && retryOne.variables) {
+      return new Set([
+        jobKey({
+          jobType: retryOne.variables.jobType,
+          id: retryOne.variables.jobId,
+        }),
+      ]);
+    }
+    return new Set<string>();
+  }, [jobs, retryAll.isPending, retryOne.isPending, retryOne.variables]);
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900 flex items-center justify-between gap-3">
-        <span>
-          요청 모니터링 — {CONTENT_JOBS_POLL_MS / 1000}초마다 처리 결과를
-          갱신합니다.
-        </span>
+      <div className="flex justify-end">
         <Button
           size="sm"
           variant="outline"
@@ -206,7 +221,7 @@ export function JobMonitor() {
       <Card className="flex flex-col py-4 px-2">
         <CardHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-bold">
+            <CardTitle className="text-xl font-semibold text-gray-900">
               {TITLE_BY_FILTER[filter]}
             </CardTitle>
             <JobTypeDropdown
@@ -228,6 +243,7 @@ export function JobMonitor() {
             queryStatus={queryStatus}
             onRetry={() => activeQueries.forEach((q) => q.refetch())}
             onResetFilter={() => setFilter('ALL')}
+            retryingKeys={retryingKeys}
             highlightedJobKey={highlightedJobKey}
             loadMoreRef={loadMoreRef}
             onDetailClick={(jobId, jobType) =>
