@@ -5,6 +5,7 @@ import type React from 'react';
 import { Bookmark, Search, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { NavigationPendingReporter } from '@components/common/NavigationPendingReporter';
 
 interface NavItem {
   href: string;
@@ -56,6 +57,7 @@ export default function BottomNavbar() {
                 }`}
               />
               <span className="text-xs font-medium">{item.label}</span>
+              {!isActive && <NavigationPendingReporter />}
             </Link>
           );
         })}

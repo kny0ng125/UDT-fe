@@ -1,6 +1,8 @@
 'use client';
 
 import BottomNavbar from '@components/common/bottom-navbar';
+import { LoadingScreen } from '@components/common/LoadingScreen';
+import { useNavigationStore } from '@store/useNavigationStore';
 import { usePathname } from 'next/navigation';
 import React from 'react';
 
@@ -10,6 +12,8 @@ export default function LayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  // 하단 탭 등 <Link> 클릭 ~ 주소 변경 사이에 표시 (NavigationPendingReporter 가 갱신)
+  const isNavigating = useNavigationStore((state) => state.isNavigating);
   const isAdmin = pathname.startsWith('/admin');
 
   // BottomNavbar를 숨겨야 하는 페이지들
@@ -51,6 +55,12 @@ export default function LayoutWrapper({
           </div>
           {!shouldHideBottomNavbar && <BottomNavbar />}
         </main>
+        {isNavigating && (
+          <LoadingScreen
+            message="이동하고 있어요!"
+            submessage="잠시만 기다려주세요...."
+          />
+        )}
       </div>
     </div>
   );
