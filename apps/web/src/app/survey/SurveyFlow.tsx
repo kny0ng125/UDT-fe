@@ -8,8 +8,9 @@ import { postSurvey } from '@lib/apis/survey/postSurvey';
 import { useErrorToastOnce } from '@udt/shared/hooks/useErrorToastOnce';
 import { showSimpleToast } from '@udt/ui/common/Toast';
 import { useSurveyStore } from '@store/useSurveyStore';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@udt/ui/components/button';
+import { LoadingScreen } from '@components/common/LoadingScreen';
 
 export default function SurveyFlow() {
   const searchParams = useSearchParams();
@@ -22,6 +23,9 @@ export default function SurveyFlow() {
   const contentIds = useSurveyStore((state) => state.contentIds);
 
   const showErrorToast = useErrorToastOnce();
+
+  // 설문 제출 ~ 온보딩 이동 완료까지 (성공하면 페이지가 바뀔 때까지 true 유지)
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // step 쿼리 없으면 자동으로 ?step=1 붙여줌
   useEffect(() => {
@@ -38,6 +42,7 @@ export default function SurveyFlow() {
     if (step < 2) {
       goToStep(step + 1);
     } else {
+      setIsSubmitting(true);
       try {
         await postSurvey({ platforms, genres, contentIds });
 
@@ -54,6 +59,7 @@ export default function SurveyFlow() {
           window.location.href = '/onboarding';
         }, 3000);
       } catch (error) {
+        setIsSubmitting(false);
         const message =
           error instanceof Error && error.message
             ? error.message
@@ -68,6 +74,12 @@ export default function SurveyFlow() {
       {step === 1 && <Step1 onNext={handleNext} />}
       {step === 2 && <Step2 onNext={handleNext} />}
       {step === 3 && <SurveyComplete />}
+      {isSubmitting && (
+        <LoadingScreen
+          message="취향을 저장하고 있어요!"
+          submessage="곧 튜토리얼로 이동해요...."
+        />
+      )}
       {step > 3 && (
         <div className="flex flex-col items-center justify-center min-h-screen">
           <p className="mb-4 font-bold">잘못된 설문 단계입니다.</p>

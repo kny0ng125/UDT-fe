@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { StartScreen } from './onBoardingStart';
 import TutorialStep from './TutorialStep';
@@ -11,6 +11,7 @@ import Step7 from './Step7';
 import Step8 from './Step8';
 import { usePageStayTracker } from '@udt/shared/hooks/usePageStayTracker';
 import { ProgressDots } from '@components/common/ProgressDots';
+import { LoadingScreen } from '@components/common/LoadingScreen';
 
 const POST_TUTORIAL_STEP_COUNT = 4; // Step5, 6, 7, 8
 const TOTAL_STEPS = TUTORIAL_STEPS.length + POST_TUTORIAL_STEP_COUNT;
@@ -19,6 +20,14 @@ export default function OnboardingPage() {
   usePageStayTracker('onboarding');
 
   const router = useRouter();
+  // /recommend 로 이동하는 동안(router.push 는 transition) 로딩 표시
+  const [isLeaving, startLeaving] = useTransition();
+
+  // 마지막 단계에서 바로 넘어가도록 미리 받아 둔다 (prefetch 는 production 에서만 동작)
+  useEffect(() => {
+    router.prefetch('/recommend');
+  }, [router]);
+
   const searchParams = useSearchParams();
 
   const stepParam = searchParams.get('step');
@@ -42,7 +51,9 @@ export default function OnboardingPage() {
     // isNewUser 쿠키 제거 (만료 시간을 과거로)
     document.cookie =
       'X-New-User=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    router.push('/recommend');
+    startLeaving(() => {
+      router.push('/recommend');
+    });
   };
 
   if (step === null) return <StartScreen onStart={handleStart} />;
@@ -74,6 +85,12 @@ export default function OnboardingPage() {
         <ProgressDots currentStep={step} totalSteps={TOTAL_STEPS} />
       </div>
       <div className="w-full h-full">{renderStep()}</div>
+      {isLeaving && (
+        <LoadingScreen
+          message="추천 화면을 준비하고 있어요!"
+          submessage="잠시만 기다려주세요...."
+        />
+      )}
     </div>
   );
 }

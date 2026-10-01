@@ -18,13 +18,18 @@ import { Skeleton } from '@udt/ui/components/skeleton';
 import { useLogoutHandler } from '@hooks/profile/useLogoutHandler';
 import { usePageStayTracker } from '@udt/shared/hooks/usePageStayTracker';
 import { useQueryErrorToast } from '@udt/shared/hooks/useQueryErrorToast';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 const ProfileClient = () => {
   // 페이지 머무르는 시간 추적 (프로필 페이지 추적 / Google Analytics 연동을 위함)
   usePageStayTracker('profile_main');
 
   const router = useRouter();
+
+  // 프로필 수정 화면을 미리 받아 둔다 (prefetch 는 production 에서만 동작)
+  useEffect(() => {
+    router.prefetch('/profile/edit');
+  }, [router]);
 
   const userQuery = useGetUserProfile();
 
