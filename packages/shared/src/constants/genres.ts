@@ -28,11 +28,12 @@ export const GENRES: Genre[] = [
 ];
 
 // 카테고리별 허용 장르
+// 백엔드 GenreType 이름과 DB(category-genre 매핑)에 맞춘 값이다. 여기에 없는 조합은 서버 검증에서 INVALID 가 된다.
 export const MOVIE_GENRES: string[] = [
   '스릴러',
   '액션',
   '어드벤처',
-  '드라마',
+  '서사/드라마',
   '코미디',
   '멜로/로맨스',
   '판타지',
@@ -48,7 +49,7 @@ export const MOVIE_GENRES: string[] = [
 
 export const DRAMA_GENRES: string[] = [
   '멜로/로맨스',
-  '드라마',
+  '서사/드라마',
   '코미디',
   '액션',
   '미스터리',
@@ -67,23 +68,18 @@ export const VARIETY_GENRES: string[] = [
   '토크쇼',
   '버라이어티',
   '서바이벌',
-  '코미디',
-  '다큐멘터리',
   '스탠드업코미디',
-  '멜로/로맨스',
 ];
 
 export const ANIMATION_GENRES: string[] = [
   'SF',
-  '드라마',
+  '서사/드라마',
   '액션',
   '스릴러',
   '미스터리',
   '판타지',
   '멜로/로맨스',
   '코미디',
-  '사극/시대극',
-  '애니메이션',
   '키즈',
   '어드벤처',
   '공포(호러)',

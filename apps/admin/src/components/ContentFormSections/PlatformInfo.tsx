@@ -39,15 +39,15 @@ export default function PlatformSection({
 }: PlatformSectionProps) {
   const platformsErr = getFieldError?.('platforms');
   return (
-    <Card>
+    <Card id="form-section-platform" className="py-5 gap-4">
       <CardHeader>
-        <CardTitle className="mt-5">시청 플랫폼 *</CardTitle>
+        <CardTitle>시청 플랫폼 *</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 mb-5">
+      <CardContent className="space-y-4">
         {platformsErr && (
           <p className="text-xs text-red-600">{platformsErr.message}</p>
         )}
-        <div className="grid grid-cols-2 gap-2 mb-2">
+        <div className="grid grid-cols-2 gap-2">
           <Select
             value={newPlatform.platformType}
             onValueChange={(value) =>
@@ -84,7 +84,7 @@ export default function PlatformSection({
         <Button
           type="button"
           onClick={addPlatform}
-          className="w-full mb-10 cursor-pointer"
+          className="w-full cursor-pointer"
         >
           <Plus className="h-4 w-4 mr-2" />
           플랫폼 추가

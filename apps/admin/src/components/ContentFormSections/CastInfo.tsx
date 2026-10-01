@@ -27,9 +27,9 @@ export default function CastInfo({
 }: CastInfoProps) {
   const castsErr = getFieldError?.('casts');
   return (
-    <Card>
+    <Card id="form-section-cast" className="py-5 gap-4">
       <CardHeader>
-        <CardTitle className="mt-5">출연진 정보</CardTitle>
+        <CardTitle>출연진 정보</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {castsErr && <p className="text-xs text-red-600">{castsErr.message}</p>}
@@ -41,7 +41,7 @@ export default function CastInfo({
           <Plus className="h-4 w-4 mr-2" />
           출연진 검색 및 추가
         </Button>
-        <div className="space-y-2 mb-5">
+        <div className="space-y-2">
           {formData.casts.map((cast) => (
             <div
               key={cast.castId}

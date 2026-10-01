@@ -61,9 +61,9 @@ export default function BasicInfo({
   const trailerErr = getFieldError?.('trailerUrl');
 
   return (
-    <Card>
+    <Card id="form-section-basic" className="py-5 gap-4">
       <CardHeader>
-        <CardTitle className="mt-5">기본 정보</CardTitle>
+        <CardTitle>기본 정보</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -98,6 +98,7 @@ export default function BasicInfo({
               }
             >
               <SelectTrigger
+                id="rating"
                 aria-invalid={!!ratingErr}
                 className={`cursor-pointer ${
                   ratingErr ? 'border-destructive ring-destructive/20' : ''
@@ -278,9 +279,7 @@ export default function BasicInfo({
             className="mb-1"
           />
           {trailerErr && (
-            <p className="mb-5 mt-1 text-xs text-red-600">
-              {trailerErr.message}
-            </p>
+            <p className="mt-1 text-xs text-red-600">{trailerErr.message}</p>
           )}
         </div>
       </CardContent>

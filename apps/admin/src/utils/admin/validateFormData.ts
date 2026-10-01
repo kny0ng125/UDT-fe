@@ -30,5 +30,13 @@ export const validateFormData = (formData: ContentWithoutId): string | null => {
     return '플랫폼은 하나 이상 입력해야 합니다.';
   }
 
+  // 러닝타임/회차는 0 이상의 정수 (서버 @Min(0), int)
+  if (!Number.isInteger(formData.runningTime) || formData.runningTime < 0) {
+    return '러닝타임은 0 이상의 정수로 입력해 주세요.';
+  }
+  if (!Number.isInteger(formData.episode) || formData.episode < 0) {
+    return '회차는 0 이상의 정수로 입력해 주세요.';
+  }
+
   return null;
 };

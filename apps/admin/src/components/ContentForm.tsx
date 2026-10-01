@@ -2,7 +2,7 @@
 
 import type React from 'react';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '@udt/ui/components/button';
 import {
@@ -18,7 +18,7 @@ import type {
 } from '@type/admin/Content';
 import type { JobValidationError } from '@type/admin/error';
 import { showSimpleToast } from '@udt/ui/common/Toast';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ArrowDown } from 'lucide-react';
 import { useErrorToastOnce } from '@udt/shared/hooks/useErrorToastOnce';
 import { usePostUploadImages } from '@hooks/admin/usePostUploadImages';
 import ActorSearchDialog from '@components/dialogs/actorSearchDialog';
@@ -32,12 +32,18 @@ import CastInfo from '@components/ContentFormSections/CastInfo';
 import PlatformSection from '@components/ContentFormSections/PlatformInfo';
 import BulkPersonRegistration from '@components/bulkPersonRegistration';
 import { validateFormData } from '@utils/admin/validateFormData';
+import {
+  describeValidationError,
+  getErrorAnchorId,
+} from '@utils/admin/describeValidationError';
 
 interface ContentFormProps {
   content?: ContentWithoutId;
   onSave: (content: ContentCreateUpdate) => void;
   onCancel: () => void;
   validationErrors?: JobValidationError[];
+  /** 제출 버튼 문구. 기본은 content 유무에 따라 수정/추가 */
+  submitLabel?: string;
 }
 
 export type FieldErrorLookup = (
@@ -90,6 +96,7 @@ export default function ContentForm({
   onSave,
   onCancel,
   validationErrors,
+  submitLabel,
 }: ContentFormProps) {
   const [formData, setFormData] = useState<ContentWithoutId>(() =>
     getInitialFormData(content),
@@ -115,6 +122,30 @@ export default function ContentForm({
       );
     };
   }, [validationErrors]);
+
+  // 서버 검증 실패가 오면 맨 위의 오류 요약으로 올려서 무엇이 틀렸는지 먼저 읽게 한다.
+  // 틀린 입력으로의 이동은 요약의 바로가기 아이콘으로 직접 한다.
+  const formRef = useRef<HTMLFormElement>(null);
+  const errorBoxRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!validationErrors || validationErrors.length === 0) return;
+    const frame = requestAnimationFrame(() => {
+      errorBoxRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [validationErrors]);
+
+  const jumpToField = useCallback((anchorId: string) => {
+    const target = formRef.current?.querySelector<HTMLElement>(`#${anchorId}`);
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (target.matches('input, textarea, select, button')) {
+      target.focus({ preventScroll: true });
+    }
+  }, []);
 
   const [isActorSearchOpen, setIsActorSearchOpen] = useState(false);
   const [isDirectorSearchOpen, setIsDirectorSearchOpen] = useState(false);
@@ -297,30 +328,46 @@ export default function ContentForm({
   );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       {validationErrors && validationErrors.length > 0 && (
         <div
+          ref={errorBoxRef}
           role="alert"
           className="rounded-md border border-red-200 bg-red-50 p-4"
         >
           <div className="flex items-center gap-2 text-red-700 font-semibold">
             <AlertCircle className="size-4" />
-            서버 검증 실패 ({validationErrors.length}건)
+            입력한 내용을 다시 확인해 주세요 ({validationErrors.length}건)
           </div>
           <ul className="mt-2 space-y-1 text-sm text-red-700">
-            {validationErrors.map((err, idx) => (
-              <li key={`${err.field}-${idx}`}>
-                <span className="font-mono text-xs px-1.5 py-0.5 mr-2 rounded bg-red-100">
-                  {err.field}
-                </span>
-                {err.message}
-                {err.value ? (
-                  <span className="ml-1 text-red-500/80">
-                    (값: {err.value})
+            {validationErrors.map((err, idx) => {
+              const { target, reason } = describeValidationError(err, formData);
+              const anchorId = getErrorAnchorId(err.field);
+              return (
+                <li
+                  key={`${err.field}-${idx}`}
+                  title={err.code}
+                  className="flex items-start gap-2"
+                >
+                  <span className="flex-1">
+                    <span className="font-medium">{target}</span>
+                    <span className="mx-1">·</span>
+                    {reason}
                   </span>
-                ) : null}
-              </li>
-            ))}
+                  {anchorId && (
+                    <button
+                      type="button"
+                      aria-label={`${target} 입력으로 이동`}
+                      title="해당 입력으로 이동"
+                      onClick={() => jumpToField(anchorId)}
+                      className="shrink-0 cursor-pointer rounded-full p-1 text-red-700 hover:bg-red-100"
+                    >
+                      <ArrowDown className="size-4" />
+                    </button>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
@@ -419,7 +466,7 @@ export default function ContentForm({
               취소
             </Button>
             <Button type="submit" className="cursor-pointer">
-              {content ? '수정' : '추가'}
+              {submitLabel ?? (content ? '수정' : '추가')}
             </Button>
           </div>
         </TabsContent>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { ArrowDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import {
 } from '@hooks/admin/useContentJobs';
 import { useMutationErrorToast } from '@udt/shared/hooks/useMutationErrorToast';
 import { extractBulkValidationError } from '@utils/admin/extractBulkValidationError';
+import { describeValidationError } from '@utils/admin/describeValidationError';
 import type {
   ContentCreateUpdate,
   ContentWithoutId,
@@ -50,12 +52,12 @@ const toFormContent = (d: ContentUpsertJobDetail): ContentWithoutId => ({
   countries: d.countries ?? [],
   directors: (d.directors ?? []).map((id) => ({
     directorId: id,
-    directorName: `감독 #${id}`,
+    directorName: `ID ${id}`,
     directorImageUrl: '',
   })),
   casts: (d.casts ?? []).map((id) => ({
     castId: id,
-    castName: `출연진 #${id}`,
+    castName: `ID ${id}`,
     castImageUrl: '',
   })),
   platforms: d.platforms ?? [],
@@ -65,12 +67,40 @@ function ValidationErrorList({ errors }: { errors: JobValidationError[] }) {
   if (errors.length === 0) return null;
   return (
     <ul className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 space-y-1">
-      {errors.map((e, i) => (
-        <li key={`${e.field}-${i}`}>
-          <span className="font-mono">{e.field}</span>
-          {e.value ? ` = "${e.value}"` : ''} — {e.message}
-        </li>
-      ))}
+      {errors.map((e, i) => {
+        const { target, reason } = describeValidationError(e);
+        // 이 목록은 삭제 재제출(콘텐츠 ID 입력) 화면에서만 쓰인다.
+        const canJump = e.field === 'contentId';
+        return (
+          <li
+            key={`${e.field}-${i}`}
+            title={e.code}
+            className="flex items-start gap-2"
+          >
+            <span className="flex-1">
+              <span className="font-medium">{target}</span> · {reason}
+            </span>
+            {canJump && (
+              <button
+                type="button"
+                aria-label={`${target} 입력으로 이동`}
+                title="해당 입력으로 이동"
+                onClick={() => {
+                  const input = document.getElementById('resubmit-content-id');
+                  input?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                  });
+                  input?.focus({ preventScroll: true });
+                }}
+                className="shrink-0 cursor-pointer rounded-full p-1 hover:bg-red-100"
+              >
+                <ArrowDown className="size-4" />
+              </button>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -209,6 +239,7 @@ export function JobResubmitDialog({
             key={`${target.jobType}-${target.jobId}`}
             content={toFormContent(detail as ContentUpsertJobDetail)}
             validationErrors={errors}
+            submitLabel="재제출"
             onSave={handleUpsert}
             onCancel={close}
           />

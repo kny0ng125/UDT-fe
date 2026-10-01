@@ -27,9 +27,9 @@ export default function DirectorInfo({
 }: DirectorInfoProps) {
   const directorsErr = getFieldError?.('directors');
   return (
-    <Card>
+    <Card id="form-section-director" className="py-5 gap-4">
       <CardHeader>
-        <CardTitle className="mt-5">감독 정보</CardTitle>
+        <CardTitle>감독 정보</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {directorsErr && (
@@ -43,7 +43,7 @@ export default function DirectorInfo({
           <Plus className="h-4 w-4 mr-2" />
           감독 검색 및 추가
         </Button>
-        <div className="space-y-2 mb-5">
+        <div className="space-y-2">
           {formData.directors.map((director) => (
             <div
               key={director.directorId}

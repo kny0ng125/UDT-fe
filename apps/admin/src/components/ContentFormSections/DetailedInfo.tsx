@@ -57,9 +57,9 @@ export default function DetailedInfo({
   const countriesErr = getFieldError?.('countries');
 
   return (
-    <Card>
+    <Card className="py-5 gap-4">
       <CardHeader>
-        <CardTitle className="mt-5">상세 정보</CardTitle>
+        <CardTitle>상세 정보</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-4">
@@ -155,6 +155,7 @@ export default function DetailedInfo({
             }}
           >
             <SelectTrigger
+              id="category"
               aria-invalid={!!categoryErr}
               className={`cursor-pointer ${
                 categoryErr ? 'border-destructive ring-destructive/20' : ''
@@ -183,12 +184,27 @@ export default function DetailedInfo({
           <div>
             <Label className="mb-3">장르 *</Label>
             <div
+              id="form-genres"
               className={`flex flex-wrap gap-2 max-w-full ${
                 genresErr
                   ? 'rounded-md border border-destructive bg-red-50/40 p-2'
                   : ''
               }`}
             >
+              {/* 이 분류에서 쓸 수 없는데 선택돼 있는 장르(서버 검증 실패 등)는 눈에 보이게 해서 지울 수 있게 한다. */}
+              {(formData.categories[0]?.genres ?? [])
+                .filter((genre) => !availableGenres.includes(genre))
+                .map((genre) => (
+                  <Badge
+                    key={`unavailable-${genre}`}
+                    variant="destructive"
+                    title="이 분류에서는 사용할 수 없는 장르예요. 눌러서 삭제해 주세요."
+                    className="cursor-pointer select-none"
+                    onClick={() => removeGenre(genre)}
+                  >
+                    {genre} ✕
+                  </Badge>
+                ))}
               {availableGenres.map((genre) => {
                 const isSelected =
                   formData.categories[0]?.genres.includes(genre);
@@ -218,7 +234,8 @@ export default function DetailedInfo({
         <div>
           <Label className="mb-3">제작 국가</Label>
           <div
-            className={`flex flex-wrap gap-2 mb-5 ${
+            id="form-countries"
+            className={`flex flex-wrap gap-2 ${
               countriesErr
                 ? 'rounded-md border border-destructive bg-red-50/40 p-2'
                 : ''
@@ -244,9 +261,7 @@ export default function DetailedInfo({
             })}
           </div>
           {countriesErr && (
-            <p className="-mt-3 mb-3 text-xs text-red-600">
-              {countriesErr.message}
-            </p>
+            <p className="mt-2 text-xs text-red-600">{countriesErr.message}</p>
           )}
         </div>
       </CardContent>
